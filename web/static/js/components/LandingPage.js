@@ -14,16 +14,45 @@ const HeroSection = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   display: 'flex',
   alignItems: 'center',
-  background: '#F8F9FA',
-  color: '#2C3E50',
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  color: 'white',
 }));
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(6),
-  borderRadius: theme.spacing(2),
-  background: 'rgba(255, 255, 255, 0.9)',
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+  borderRadius: '24px',
+  background: 'rgba(255, 255, 255, 0.95)',
+  boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
   backdropFilter: 'blur(10px)',
+}));
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  padding: '12px 32px',
+  borderRadius: '12px',
+  fontWeight: 600,
+  fontSize: '1rem',
+  textTransform: 'none',
+  transition: 'all 0.3s ease',
+}));
+
+const PrimaryButton = styled(ActionButton)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  color: 'white',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
+  },
+}));
+
+const SecondaryButton = styled(ActionButton)(({ theme }) => ({
+  background: 'white',
+  color: '#667eea',
+  border: '2px solid #667eea',
+  '&:hover': {
+    background: '#667eea',
+    color: 'white',
+    transform: 'translateY(-2px)',
+  },
 }));
 
 const LandingPage = () => {
@@ -32,12 +61,38 @@ const LandingPage = () => {
 
   return (
     <HeroSection>
-      <Container maxWidth="md">
+      <Container maxWidth="lg">
+        {/* Header */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            p: 3,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: 'white',
+              fontSize: '24px',
+            }}
+          >
+            EventHub
+          </Typography>
+        </Box>
+
+        {/* Main Content */}
         <StyledPaper elevation={0}>
           <Box
             sx={{
               textAlign: 'center',
-              py: 4,
+              py: 2,
             }}
           >
             <Typography
@@ -45,13 +100,13 @@ const LandingPage = () => {
               component="h1"
               gutterBottom
               sx={{
-                fontWeight: 300,
-                mb: 4,
-                color: '#2C3E50',
-                letterSpacing: '0.5px',
+                fontWeight: 700,
+                mb: 3,
+                color: '#2d3748',
+                letterSpacing: '-0.5px',
               }}
             >
-              Welcome
+              Create Amazing Events
             </Typography>
             
             <Typography
@@ -60,12 +115,15 @@ const LandingPage = () => {
               gutterBottom
               sx={{
                 mb: 6,
-                color: '#5D6D7E',
-                fontWeight: 300,
-                letterSpacing: '0.3px',
+                color: '#718096',
+                fontWeight: 400,
+                lineHeight: 1.6,
+                maxWidth: '600px',
+                mx: 'auto',
               }}
             >
-              Experience simplicity redefined
+              Plan, organize, and share memorable events with friends and family. 
+              From birthdays to corporate gatherings, make every occasion special.
             </Typography>
 
             <Box
@@ -74,51 +132,79 @@ const LandingPage = () => {
                 gap: 3,
                 justifyContent: 'center',
                 flexDirection: isMobile ? 'column' : 'row',
+                alignItems: 'center',
               }}
             >
-              <Button
+              <PrimaryButton
                 variant="contained"
                 size="large"
                 href="/login"
-                sx={{
-                  bgcolor: '#2C3E50',
-                  color: 'white',
-                  '&:hover': {
-                    bgcolor: '#34495E',
-                  },
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: '4px',
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  fontWeight: 400,
-                  letterSpacing: '0.5px',
-                }}
               >
-                Login
-              </Button>
-              <Button
+                Get Started
+              </PrimaryButton>
+              <SecondaryButton
                 variant="outlined"
                 size="large"
                 href="/signup"
-                sx={{
-                  borderColor: '#2C3E50',
-                  color: '#2C3E50',
-                  '&:hover': {
-                    borderColor: '#34495E',
-                    bgcolor: 'rgba(44, 62, 80, 0.04)',
-                  },
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: '4px',
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  fontWeight: 400,
-                  letterSpacing: '0.5px',
-                }}
               >
-                Sign Up
-              </Button>
+                Learn More
+              </SecondaryButton>
+            </Box>
+
+            {/* Feature highlights */}
+            <Box
+              sx={{
+                mt: 6,
+                pt: 4,
+                borderTop: '1px solid #e2e8f0',
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+                gap: 4,
+                textAlign: 'center',
+              }}
+            >
+              <Box>
+                <Typography
+                  variant="h4"
+                  sx={{ fontSize: '2rem', mb: 1 }}
+                >
+                  🎉
+                </Typography>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
+                  Easy Planning
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Create events in minutes with our intuitive interface
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant="h4"
+                  sx={{ fontSize: '2rem', mb: 1 }}
+                >
+                  🌐
+                </Typography>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
+                  Share Easily
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Send invites and share event details with anyone
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant="h4"
+                  sx={{ fontSize: '2rem', mb: 1 }}
+                >
+                  📱
+                </Typography>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
+                  Mobile Ready
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Access your events anywhere, on any device
+                </Typography>
+              </Box>
             </Box>
           </Box>
         </StyledPaper>

@@ -23,15 +23,28 @@ import {
 
 const DashboardContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
-  background: '#F8F9FA',
-  padding: theme.spacing(4, 0),
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  padding: theme.spacing(3, 0),
+}));
+
+const Header = styled(Box)(({ theme }) => ({
+  background: 'white',
+  borderRadius: '16px',
+  padding: theme.spacing(2.5),
+  marginBottom: theme.spacing(3),
+  boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: theme.spacing(2),
 }));
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
-  borderRadius: theme.spacing(2),
-  background: 'rgba(255, 255, 255, 0.9)',
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+  borderRadius: '24px',
+  background: 'rgba(255, 255, 255, 0.95)',
+  boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
   backdropFilter: 'blur(10px)',
 }));
 
@@ -39,15 +52,48 @@ const UserAvatar = styled(Avatar)(({ theme }) => ({
   width: 120,
   height: 120,
   marginBottom: theme.spacing(2),
-  border: `4px solid ${theme.palette.primary.main}`,
+  border: '4px solid #667eea',
+  boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
   textTransform: 'none',
-  borderRadius: theme.spacing(1),
+  borderRadius: '12px',
   padding: theme.spacing(1.5, 3),
   fontSize: '1rem',
-  fontWeight: 500,
+  fontWeight: 600,
+  transition: 'all 0.3s ease',
+}));
+
+const PrimaryButton = styled(ActionButton)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  color: 'white',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
+  },
+}));
+
+const SecondaryButton = styled(ActionButton)(({ theme }) => ({
+  background: 'white',
+  color: '#667eea',
+  border: '2px solid #667eea',
+  '&:hover': {
+    background: '#667eea',
+    color: 'white',
+    transform: 'translateY(-2px)',
+  },
+}));
+
+const StatsCard = styled(Card)(({ theme }) => ({
+  borderRadius: '16px',
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  color: 'white',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 12px 40px rgba(102, 126, 234, 0.3)',
+  },
 }));
 
 const UserDashboard = ({ userData }) => {
@@ -57,6 +103,28 @@ const UserDashboard = ({ userData }) => {
   return (
     <DashboardContainer>
       <Container maxWidth="lg">
+        {/* Header */}
+        <Header>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: '#667eea',
+              fontSize: '24px',
+            }}
+          >
+            EventHub
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <IconButton sx={{ color: '#667eea' }}>
+              <NotificationsIcon />
+            </IconButton>
+            <IconButton sx={{ color: '#667eea' }}>
+              <SettingsIcon />
+            </IconButton>
+          </Box>
+        </Header>
+
         <Grid container spacing={4}>
           {/* User Profile Section */}
           <Grid item xs={12} md={4}>
@@ -70,44 +138,35 @@ const UserDashboard = ({ userData }) => {
                 }}
               >
                 <UserAvatar src={userData.picture} alt={userData.nickname} />
-                <Typography variant="h4" gutterBottom sx={{ fontWeight: 500 }}>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
                   {userData.nickname}
                 </Typography>
                 <Typography
                   variant="body1"
                   color="text.secondary"
                   gutterBottom
-                  sx={{ mb: 3 }}
+                  sx={{ mb: 4 }}
                 >
                   {userData.email}
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                  <IconButton color="primary">
-                    <NotificationsIcon />
-                  </IconButton>
-                  <IconButton color="primary">
-                    <SettingsIcon />
-                  </IconButton>
-                </Box>
-                <ActionButton
+                
+                <PrimaryButton
                   variant="contained"
-                  color="primary"
                   href="/events"
                   startIcon={<EventIcon />}
                   fullWidth
                   sx={{ mb: 2 }}
                 >
                   My Events
-                </ActionButton>
-                <ActionButton
+                </PrimaryButton>
+                <SecondaryButton
                   variant="outlined"
-                  color="primary"
                   href="/logout"
                   startIcon={<LogoutIcon />}
                   fullWidth
                 >
                   Logout
-                </ActionButton>
+                </SecondaryButton>
               </Box>
             </StyledPaper>
           </Grid>
@@ -118,69 +177,89 @@ const UserDashboard = ({ userData }) => {
               {/* Welcome Card */}
               <Grid item xs={12}>
                 <StyledPaper>
-                  <Typography variant="h5" gutterBottom sx={{ fontWeight: 500 }}>
-                    Welcome Back!
+                  <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
+                    Welcome Back, {userData.nickname}! 👋
                   </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    Here's what's happening with your account today.
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                    Ready to create amazing events? Here's your dashboard overview.
                   </Typography>
+                  <PrimaryButton
+                    variant="contained"
+                    href="/create-event"
+                    startIcon={<EventIcon />}
+                  >
+                    Create New Event
+                  </PrimaryButton>
                 </StyledPaper>
               </Grid>
 
               {/* Stats Cards */}
               <Grid item xs={12} sm={6}>
-                <Card sx={{ height: '100%' }}>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Profile Views
+                <StatsCard>
+                  <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="h2" sx={{ fontSize: '3rem', mb: 1 }}>
+                      🎉
                     </Typography>
-                    <Typography variant="h3" color="primary">
-                      245
+                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+                      Events
+                    </Typography>
+                    <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                      Create and manage your events
                     </Typography>
                   </CardContent>
-                </Card>
+                </StatsCard>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Card sx={{ height: '100%' }}>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Last Login
+                <StatsCard>
+                  <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="h2" sx={{ fontSize: '3rem', mb: 1 }}>
+                      🌐
                     </Typography>
-                    <Typography variant="h3" color="primary">
-                      Today
+                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+                      Share
+                    </Typography>
+                    <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                      Share events with friends
                     </Typography>
                   </CardContent>
-                </Card>
+                </StatsCard>
               </Grid>
 
-              {/* Recent Activity */}
+              {/* Quick Actions */}
               <Grid item xs={12}>
                 <StyledPaper>
-                  <Typography variant="h6" gutterBottom>
-                    Recent Activity
+                  <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#2d3748', mb: 3 }}>
+                    Quick Actions
                   </Typography>
-                  <Box sx={{ mt: 2 }}>
-                    {[1, 2, 3].map((item) => (
-                      <Box
-                        key={item}
-                        sx={{
-                          py: 2,
-                          borderBottom: '1px solid',
-                          borderColor: 'divider',
-                          '&:last-child': {
-                            borderBottom: 'none',
-                          },
-                        }}
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={4}>
+                      <SecondaryButton
+                        fullWidth
+                        href="/create-event"
+                        startIcon={<EventIcon />}
                       >
-                        <Typography variant="body1">
-                          Activity item {item}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {new Date().toLocaleDateString()}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
+                        Create Event
+                      </SecondaryButton>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <SecondaryButton
+                        fullWidth
+                        href="/events"
+                        startIcon={<EventIcon />}
+                      >
+                        View Events
+                      </SecondaryButton>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                      <SecondaryButton
+                        fullWidth
+                        href="/events"
+                        startIcon={<EventIcon />}
+                      >
+                        Browse Public
+                      </SecondaryButton>
+                    </Grid>
+                  </Grid>
                 </StyledPaper>
               </Grid>
             </Grid>

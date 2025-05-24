@@ -28,24 +28,58 @@ import {
 
 const PageContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
-  background: '#F8F9FA',
-  padding: theme.spacing(4, 0),
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  padding: theme.spacing(3, 0),
+}));
+
+const Header = styled(Box)(({ theme }) => ({
+  background: 'white',
+  borderRadius: '16px',
+  padding: theme.spacing(2.5),
+  marginBottom: theme.spacing(3),
+  boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: theme.spacing(2),
 }));
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
-  borderRadius: theme.spacing(2),
-  background: 'rgba(255, 255, 255, 0.9)',
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+  borderRadius: '24px',
+  background: 'rgba(255, 255, 255, 0.95)',
+  boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
   backdropFilter: 'blur(10px)',
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
   textTransform: 'none',
-  borderRadius: theme.spacing(1),
+  borderRadius: '12px',
   padding: theme.spacing(1.5, 3),
   fontSize: '1rem',
-  fontWeight: 500,
+  fontWeight: 600,
+  transition: 'all 0.3s ease',
+}));
+
+const PrimaryButton = styled(ActionButton)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  color: 'white',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
+  },
+}));
+
+const SecondaryButton = styled(ActionButton)(({ theme }) => ({
+  background: 'white',
+  color: '#667eea',
+  border: '2px solid #667eea',
+  '&:hover': {
+    background: '#667eea',
+    color: 'white',
+    transform: 'translateY(-2px)',
+  },
 }));
 
 const CreateEventPage = ({ userId }) => {
@@ -136,14 +170,16 @@ const CreateEventPage = ({ userId }) => {
         <Container maxWidth="md">
           <StyledPaper>
             <Box textAlign="center" py={6}>
-              <EventIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h5" gutterBottom color="primary">
+              <Typography variant="h2" sx={{ fontSize: '4rem', mb: 2 }}>
+                🎉
+              </Typography>
+              <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
                 Event Created Successfully!
               </Typography>
               <Typography variant="body1" color="text.secondary" mb={3}>
                 Redirecting to your events...
               </Typography>
-              <CircularProgress size={30} />
+              <CircularProgress size={30} sx={{ color: '#667eea' }} />
             </Box>
           </StyledPaper>
         </Container>
@@ -155,27 +191,24 @@ const CreateEventPage = ({ userId }) => {
     <PageContainer>
       <Container maxWidth="md">
         {/* Header */}
-        <StyledPaper sx={{ mb: 4 }}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <IconButton 
-              onClick={() => window.location.href = '/events'}
-              sx={{ 
-                backgroundColor: 'rgba(44, 62, 80, 0.1)',
-                '&:hover': { backgroundColor: 'rgba(44, 62, 80, 0.2)' }
-              }}
-            >
-              <ArrowBackIcon />
-            </IconButton>
-            <Box>
-              <Typography variant="h4" gutterBottom sx={{ fontWeight: 500, mb: 0 }}>
-                Create New Event
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Fill in the details for your event
-              </Typography>
-            </Box>
-          </Box>
-        </StyledPaper>
+        <Header>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 700,
+              color: '#667eea',
+              fontSize: '24px',
+            }}
+          >
+            EventHub
+          </Typography>
+          <SecondaryButton
+            onClick={() => window.location.href = '/events'}
+            startIcon={<ArrowBackIcon />}
+          >
+            Back to Events
+          </SecondaryButton>
+        </Header>
 
         {/* Error Alert */}
         {error && (
@@ -186,6 +219,15 @@ const CreateEventPage = ({ userId }) => {
 
         {/* Form */}
         <StyledPaper>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
+              Create New Event 🎉
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Fill in the details for your amazing event
+            </Typography>
+          </Box>
+
           <Box component="form" onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               {/* Basic Information */}
@@ -328,22 +370,21 @@ const CreateEventPage = ({ userId }) => {
               {/* Submit Button */}
               <Grid item xs={12}>
                 <Box display="flex" gap={2} justifyContent="flex-end" sx={{ mt: 3 }}>
-                  <ActionButton
+                  <SecondaryButton
                     variant="outlined"
                     onClick={() => window.location.href = '/events'}
                     disabled={loading}
                   >
                     Cancel
-                  </ActionButton>
-                  <ActionButton
+                  </SecondaryButton>
+                  <PrimaryButton
                     type="submit"
                     variant="contained"
-                    color="primary"
                     disabled={loading}
                     startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
                   >
                     {loading ? 'Creating...' : 'Create Event'}
-                  </ActionButton>
+                  </PrimaryButton>
                 </Box>
               </Grid>
             </Grid>
