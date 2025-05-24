@@ -13,6 +13,8 @@ import (
 	"01-Login/platform/controllers"
 	"01-Login/platform/middleware"
 	"01-Login/web/app/callback"
+	createevent "01-Login/web/app/create-event"
+	"01-Login/web/app/events"
 	"01-Login/web/app/home"
 	"01-Login/web/app/login"
 	"01-Login/web/app/logout"
@@ -49,6 +51,8 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 	router.GET("/signup", signup.Handler)
 	router.GET("/callback", callback.Handler(auth))
 	router.GET("/user", middleware.IsAuthenticated, user.Handler)
+	router.GET("/events", middleware.IsAuthenticated, events.Handler)
+	router.GET("/create-event", middleware.IsAuthenticated, createevent.Handler)
 	router.GET("/logout", logout.Handler)
 
 	// Initialize controllers

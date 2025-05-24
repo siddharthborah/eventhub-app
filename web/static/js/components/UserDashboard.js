@@ -18,6 +18,7 @@ import {
   Notifications as NotificationsIcon,
   Settings as SettingsIcon,
   ExitToApp as LogoutIcon,
+  Event as EventIcon,
 } from '@mui/icons-material';
 
 const DashboardContainer = styled(Box)(({ theme }) => ({
@@ -88,6 +89,16 @@ const UserDashboard = ({ userData }) => {
                     <SettingsIcon />
                   </IconButton>
                 </Box>
+                <ActionButton
+                  variant="contained"
+                  color="primary"
+                  href="/events"
+                  startIcon={<EventIcon />}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                >
+                  My Events
+                </ActionButton>
                 <ActionButton
                   variant="outlined"
                   color="primary"

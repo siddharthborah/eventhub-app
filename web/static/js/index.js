@@ -4,6 +4,8 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import LandingPage from './components/LandingPage';
 import UserDashboard from './components/UserDashboard';
+import MyEventsPage from './components/MyEventsPage';
+import CreateEventPage from './components/CreateEventPage';
 
 const theme = createTheme({
   palette: {
@@ -46,14 +48,28 @@ const theme = createTheme({
 const container = document.getElementById('root');
 const root = createRoot(container);
 
-// Check if we're on the user page and have user data
+// Check page type and user data
+const pageType = window.pageType;
 const userData = window.userData;
+const userId = window.userId;
+
+// Determine which component to render
+let ComponentToRender;
+if (pageType === 'events') {
+  ComponentToRender = <MyEventsPage userId={userId} />;
+} else if (pageType === 'create-event') {
+  ComponentToRender = <CreateEventPage userId={userId} />;
+} else if (userData) {
+  ComponentToRender = <UserDashboard userData={userData} />;
+} else {
+  ComponentToRender = <LandingPage />;
+}
 
 root.render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      {userData ? <UserDashboard userData={userData} /> : <LandingPage />}
+      {ComponentToRender}
     </ThemeProvider>
   </React.StrictMode>
 ); 
