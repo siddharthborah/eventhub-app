@@ -2,6 +2,8 @@ package router
 
 import (
 	"encoding/gob"
+	"net/http"
+	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -26,6 +28,13 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 	gob.Register(map[string]interface{}{})
 
 	store := cookie.NewStore([]byte("secret"))
+	store.Options(sessions.Options{
+		Path:     "/",
+		MaxAge:   int(24 * time.Hour.Seconds()),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
 	router.Use(sessions.Sessions("auth-session", store))
 
 	// Serve static files

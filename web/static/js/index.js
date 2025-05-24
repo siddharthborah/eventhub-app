@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import LandingPage from './components/LandingPage';
+import UserDashboard from './components/UserDashboard';
 
 const theme = createTheme({
   palette: {
@@ -45,11 +46,14 @@ const theme = createTheme({
 const container = document.getElementById('root');
 const root = createRoot(container);
 
+// Check if we're on the user page and have user data
+const userData = window.userData;
+
 root.render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <LandingPage />
+      {userData ? <UserDashboard userData={userData} /> : <LandingPage />}
     </ThemeProvider>
   </React.StrictMode>
 ); 
