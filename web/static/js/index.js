@@ -56,9 +56,9 @@ const userId = window.userId;
 // Determine which component to render
 let ComponentToRender;
 if (pageType === 'events') {
-  ComponentToRender = <MyEventsPage userId={userId} />;
+  ComponentToRender = <MyEventsPage userId={userId} userInfo={userData} />;
 } else if (pageType === 'create-event') {
-  ComponentToRender = <CreateEventPage userId={userId} />;
+  ComponentToRender = <CreateEventPage userId={userId} userInfo={userData} />;
 } else if (userData) {
   ComponentToRender = <UserDashboard userData={userData} />;
 } else {

@@ -40,11 +40,13 @@ func DetailHandler(ctx *gin.Context) {
 	var isAuthenticated bool
 	var userID string
 	var isOwner bool
+	var userInfo map[string]interface{}
 
 	if profile != nil {
 		isAuthenticated = true
 		profileMap := profile.(map[string]interface{})
 		authID := profileMap["sub"].(string)
+		userInfo = profileMap
 
 		// Get user from database using Auth ID
 		userService := services.NewUserService()
@@ -61,6 +63,8 @@ func DetailHandler(ctx *gin.Context) {
 		"isAuthenticated": isAuthenticated,
 		"userID":          userID,
 		"isOwner":         isOwner,
+		"userInfo":        userInfo,
+		"currentPage":     "/events/" + eventIDStr,
 		"shareURL":        ctx.Request.Host + "/events/" + eventIDStr,
 	}
 

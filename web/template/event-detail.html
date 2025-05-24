@@ -42,43 +42,257 @@
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 96px 20px 20px; /* Updated padding to match theme.spacing(12) */
         }
         
         .header {
-            background: white;
+            position: fixed;
+            top: 16px; /* theme.spacing(2) = 16px */
+            left: 16px;
+            right: 16px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
             border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
+            padding: 12px 24px; /* theme.spacing(1.5, 3) */
+            max-width: 1200px;
+            margin: 0 auto;
         }
         
         .logo {
-            font-size: 24px;
+            font-size: 20px; /* h5 variant */
             font-weight: 700;
             color: #667eea;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px; /* theme.spacing(0.5) */
+        }
+        
+        .logo:hover {
+            transform: scale(1.05);
         }
         
         .nav-links {
             display: flex;
-            gap: 20px;
+            gap: 16px; /* theme.spacing(2) */
             align-items: center;
         }
         
         .nav-links a {
             text-decoration: none;
-            color: #666;
-            font-weight: 500;
-            transition: color 0.3s;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 14.4px; /* 0.9rem */
+            padding: 8px 16px; /* theme.spacing(1, 2) */
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: none;
         }
         
         .nav-links a:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .nav-links a.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .nav-links a.primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .nav-links a.current {
+            background-color: rgba(102, 126, 234, 0.1);
             color: #667eea;
+        }
+        
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* theme.spacing(1) */
+        }
+        
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14.4px; /* 0.9rem */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            border: none;
+            outline: none;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.05); /* Reduced from 1.1 to match React component */
+        }
+        
+        .user-menu {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 200px;
+            display: none;
+            z-index: 1001;
+            margin-top: 8px; /* mt: 1 in React component */
+        }
+        
+        .user-menu.show {
+            display: block;
+        }
+        
+        .user-info {
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .user-info h4 {
+            margin: 0 0 4px 0;
+            font-weight: 700;
+            color: #2d3748;
+            font-size: 14px;
+        }
+        
+        .user-info p {
+            margin: 0;
+            color: #718096;
+            font-size: 12px;
+        }
+        
+        .user-menu a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 2px 8px;
+        }
+        
+        .user-menu a:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        
+        .user-menu a:last-child {
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 8px;
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-menu-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .mobile-menu {
+            position: absolute;
+            top: 70px;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 200px;
+            display: none;
+            z-index: 1001;
+            margin-top: 8px;
+        }
+        
+        .mobile-menu.show {
+            display: block;
+        }
+        
+        .mobile-menu a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 2px 8px;
+        }
+        
+        .mobile-menu a.primary {
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        .mobile-menu a:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        
+        .mobile-menu a:last-child {
+            margin-bottom: 8px;
+        }
+        
+        /* Mobile responsive header */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 8px 16px; /* theme.spacing(1, 2) for mobile */
+            }
+            
+            .nav-links {
+                display: none; /* Hide desktop nav on mobile */
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .logo {
+                font-size: 18px;
+            }
+            
+            .container {
+                padding: 80px 16px 16px;
+            }
         }
         
         .event-card {
@@ -320,16 +534,77 @@
 <body>
     <div class="container">
         <header class="header">
-            <div class="logo">EventHub</div>
-            <nav class="nav-links">
-                {{ if .isAuthenticated }}
-                    <a href="/events">My Events</a>
-                    <a href="/create-event">Create Event</a>
-                    <a href="/logout">Logout</a>
-                {{ else }}
-                    <a href="/login">Login</a>
-                {{ end }}
-            </nav>
+            <div class="header-content">
+                <!-- Logo -->
+                <a href="/user" class="logo">🎪 EventHub</a>
+                
+                <!-- Desktop Navigation -->
+                <nav class="nav-links">
+                    {{ if .isAuthenticated }}
+                        <a href="/user" {{ if eq .currentPage "/user" }}class="current"{{ end }}>
+                            <span class="material-icons" style="font-size: 16px;">dashboard</span>
+                            Dashboard
+                        </a>
+                        <a href="/events" {{ if eq .currentPage "/events" }}class="current"{{ end }}>
+                            <span class="material-icons" style="font-size: 16px;">event</span>
+                            My Events
+                        </a>
+                        <a href="/create-event" class="primary">
+                            <span class="material-icons" style="font-size: 16px;">add</span>
+                            Create Event
+                        </a>
+                    {{ else }}
+                        <a href="/login" class="primary">Login</a>
+                    {{ end }}
+                </nav>
+                
+                <!-- User Profile & Mobile Menu -->
+                <div class="user-section">
+                    {{ if .isAuthenticated }}
+                        <!-- User Profile -->
+                        <div class="user-avatar" onclick="toggleUserMenu()" title="{{ .userInfo.name }}">
+                            {{ if .userInfo.name }}
+                                {{ index .userInfo.name 0 }}
+                            {{ else }}
+                                U
+                            {{ end }}
+                            <div id="userMenu" class="user-menu">
+                                <div class="user-info">
+                                    <h4>{{ .userInfo.name }}</h4>
+                                    <p>{{ .userInfo.email }}</p>
+                                </div>
+                                <a href="/logout">
+                                    <span class="material-icons" style="font-size: 16px;">logout</span>
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Mobile Menu Button -->
+                        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                            <span class="material-icons">menu</span>
+                        </button>
+                    {{ end }}
+                </div>
+            </div>
+            
+            <!-- Mobile Navigation Menu -->
+            {{ if .isAuthenticated }}
+                <div id="mobileMenu" class="mobile-menu">
+                    <a href="/user">
+                        <span class="material-icons" style="font-size: 16px;">dashboard</span>
+                        Dashboard
+                    </a>
+                    <a href="/events">
+                        <span class="material-icons" style="font-size: 16px;">event</span>
+                        My Events
+                    </a>
+                    <a href="/create-event" class="primary">
+                        <span class="material-icons" style="font-size: 16px;">add</span>
+                        Create Event
+                    </a>
+                </div>
+            {{ end }}
         </header>
         
         <div class="event-card">
@@ -454,6 +729,50 @@
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        });
+        
+        // User menu toggle
+        function toggleUserMenu() {
+            const userMenu = document.getElementById('userMenu');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            // Close mobile menu if open
+            if (mobileMenu) {
+                mobileMenu.classList.remove('show');
+            }
+            
+            userMenu.classList.toggle('show');
+        }
+        
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const userMenu = document.getElementById('userMenu');
+            
+            // Close user menu if open
+            if (userMenu) {
+                userMenu.classList.remove('show');
+            }
+            
+            mobileMenu.classList.toggle('show');
+        }
+        
+        // Close menus when clicking outside
+        document.addEventListener('click', function(e) {
+            const userAvatar = document.querySelector('.user-avatar');
+            const userMenu = document.getElementById('userMenu');
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            // Close user menu if clicking outside
+            if (userMenu && userAvatar && !userAvatar.contains(e.target)) {
+                userMenu.classList.remove('show');
+            }
+            
+            // Close mobile menu if clicking outside
+            if (mobileMenu && mobileMenuBtn && !mobileMenuBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+                mobileMenu.classList.remove('show');
+            }
         });
         
         function openShareModal() {

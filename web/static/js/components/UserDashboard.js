@@ -20,24 +20,13 @@ import {
   ExitToApp as LogoutIcon,
   Event as EventIcon,
 } from '@mui/icons-material';
+import SharedHeader from './SharedHeader';
 
 const DashboardContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  padding: theme.spacing(3, 0),
-}));
-
-const Header = styled(Box)(({ theme }) => ({
-  background: 'white',
-  borderRadius: '16px',
-  padding: theme.spacing(2.5),
-  marginBottom: theme.spacing(3),
-  boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  flexWrap: 'wrap',
-  gap: theme.spacing(2),
+  paddingTop: theme.spacing(12), // Space for floating header
+  paddingBottom: theme.spacing(4),
 }));
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -101,172 +90,153 @@ const UserDashboard = ({ userData }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
-    <DashboardContainer>
-      <Container maxWidth="lg">
-        {/* Header */}
-        <Header>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              color: '#667eea',
-              fontSize: '24px',
-            }}
-          >
-            EventHub
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <IconButton sx={{ color: '#667eea' }}>
-              <NotificationsIcon />
-            </IconButton>
-            <IconButton sx={{ color: '#667eea' }}>
-              <SettingsIcon />
-            </IconButton>
-          </Box>
-        </Header>
-
-        <Grid container spacing={4}>
-          {/* User Profile Section */}
-          <Grid item xs={12} md={4}>
-            <StyledPaper>
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                }}
-              >
-                <UserAvatar src={userData.picture} alt={userData.nickname} />
-                <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
-                  {userData.nickname}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  gutterBottom
-                  sx={{ mb: 4 }}
+    <>
+      <SharedHeader currentPage="/user" userInfo={userData} />
+      <DashboardContainer>
+        <Container maxWidth="lg">
+          <Grid container spacing={4}>
+            {/* User Profile Section */}
+            <Grid item xs={12} md={4}>
+              <StyledPaper>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                  }}
                 >
-                  {userData.email}
-                </Typography>
-                
-                <PrimaryButton
-                  variant="contained"
-                  href="/events"
-                  startIcon={<EventIcon />}
-                  fullWidth
-                  sx={{ mb: 2 }}
-                >
-                  My Events
-                </PrimaryButton>
-                <SecondaryButton
-                  variant="outlined"
-                  href="/logout"
-                  startIcon={<LogoutIcon />}
-                  fullWidth
-                >
-                  Logout
-                </SecondaryButton>
-              </Box>
-            </StyledPaper>
-          </Grid>
-
-          {/* Main Content Section */}
-          <Grid item xs={12} md={8}>
-            <Grid container spacing={3}>
-              {/* Welcome Card */}
-              <Grid item xs={12}>
-                <StyledPaper>
+                  <UserAvatar src={userData.picture} alt={userData.nickname} />
                   <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
-                    Welcome Back, {userData.nickname}! 👋
+                    {userData.nickname}
                   </Typography>
-                  <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                    Ready to create amazing events? Here's your dashboard overview.
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    gutterBottom
+                    sx={{ mb: 4 }}
+                  >
+                    {userData.email}
                   </Typography>
+                  
                   <PrimaryButton
                     variant="contained"
-                    href="/create-event"
+                    href="/events"
                     startIcon={<EventIcon />}
+                    fullWidth
+                    sx={{ mb: 2 }}
                   >
-                    Create New Event
+                    My Events
                   </PrimaryButton>
-                </StyledPaper>
-              </Grid>
+                  <SecondaryButton
+                    variant="outlined"
+                    href="/logout"
+                    startIcon={<LogoutIcon />}
+                    fullWidth
+                  >
+                    Logout
+                  </SecondaryButton>
+                </Box>
+              </StyledPaper>
+            </Grid>
 
-              {/* Stats Cards */}
-              <Grid item xs={12} sm={6}>
-                <StatsCard>
-                  <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography variant="h2" sx={{ fontSize: '3rem', mb: 1 }}>
-                      🎉
+            {/* Main Content Section */}
+            <Grid item xs={12} md={8}>
+              <Grid container spacing={3}>
+                {/* Welcome Card */}
+                <Grid item xs={12}>
+                  <StyledPaper>
+                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
+                      Welcome Back, {userData.nickname}! 👋
                     </Typography>
-                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
-                      Events
+                    <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                      Ready to create amazing events? Here's your dashboard overview.
                     </Typography>
-                    <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                      Create and manage your events
-                    </Typography>
-                  </CardContent>
-                </StatsCard>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <StatsCard>
-                  <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography variant="h2" sx={{ fontSize: '3rem', mb: 1 }}>
-                      🌐
-                    </Typography>
-                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
-                      Share
-                    </Typography>
-                    <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                      Share events with friends
-                    </Typography>
-                  </CardContent>
-                </StatsCard>
-              </Grid>
+                    <PrimaryButton
+                      variant="contained"
+                      href="/create-event"
+                      startIcon={<EventIcon />}
+                    >
+                      Create New Event
+                    </PrimaryButton>
+                  </StyledPaper>
+                </Grid>
 
-              {/* Quick Actions */}
-              <Grid item xs={12}>
-                <StyledPaper>
-                  <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#2d3748', mb: 3 }}>
-                    Quick Actions
-                  </Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4}>
-                      <SecondaryButton
-                        fullWidth
-                        href="/create-event"
-                        startIcon={<EventIcon />}
-                      >
-                        Create Event
-                      </SecondaryButton>
+                {/* Stats Cards */}
+                <Grid item xs={12} sm={6}>
+                  <StatsCard>
+                    <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                      <Typography variant="h2" sx={{ fontSize: '3rem', mb: 1 }}>
+                        🎉
+                      </Typography>
+                      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+                        Events
+                      </Typography>
+                      <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                        Create and manage your events
+                      </Typography>
+                    </CardContent>
+                  </StatsCard>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <StatsCard>
+                    <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                      <Typography variant="h2" sx={{ fontSize: '3rem', mb: 1 }}>
+                        🌐
+                      </Typography>
+                      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+                        Share
+                      </Typography>
+                      <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                        Share events with friends
+                      </Typography>
+                    </CardContent>
+                  </StatsCard>
+                </Grid>
+
+                {/* Quick Actions */}
+                <Grid item xs={12}>
+                  <StyledPaper>
+                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#2d3748', mb: 3 }}>
+                      Quick Actions
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={4}>
+                        <SecondaryButton
+                          fullWidth
+                          href="/create-event"
+                          startIcon={<EventIcon />}
+                        >
+                          Create Event
+                        </SecondaryButton>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <SecondaryButton
+                          fullWidth
+                          href="/events"
+                          startIcon={<EventIcon />}
+                        >
+                          View Events
+                        </SecondaryButton>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <SecondaryButton
+                          fullWidth
+                          href="/events"
+                          startIcon={<EventIcon />}
+                        >
+                          Browse Public
+                        </SecondaryButton>
+                      </Grid>
                     </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <SecondaryButton
-                        fullWidth
-                        href="/events"
-                        startIcon={<EventIcon />}
-                      >
-                        View Events
-                      </SecondaryButton>
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                      <SecondaryButton
-                        fullWidth
-                        href="/events"
-                        startIcon={<EventIcon />}
-                      >
-                        Browse Public
-                      </SecondaryButton>
-                    </Grid>
-                  </Grid>
-                </StyledPaper>
+                  </StyledPaper>
+                </Grid>
               </Grid>
             </Grid>
           </Grid>
-        </Grid>
-      </Container>
-    </DashboardContainer>
+        </Container>
+      </DashboardContainer>
+    </>
   );
 };
 

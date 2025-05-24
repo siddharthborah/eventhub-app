@@ -32,55 +32,91 @@ import {
   Visibility as VisibilityIcon,
   Schedule as ScheduleIcon,
 } from '@mui/icons-material';
+import SharedHeader from './SharedHeader';
 
 const PageContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
-  background: '#F8F9FA',
-  padding: theme.spacing(4, 0),
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  paddingTop: theme.spacing(12), // Space for floating header
+  paddingBottom: theme.spacing(4),
 }));
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
-  borderRadius: theme.spacing(2),
-  background: 'rgba(255, 255, 255, 0.9)',
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
+  borderRadius: '24px',
+  background: 'rgba(255, 255, 255, 0.95)',
+  boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
   backdropFilter: 'blur(10px)',
 }));
 
 const EventCard = styled(Card)(({ theme }) => ({
-  borderRadius: theme.spacing(2),
+  borderRadius: '16px',
   transition: 'all 0.3s ease',
+  background: 'rgba(255, 255, 255, 0.95)',
+  backdropFilter: 'blur(10px)',
   '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+    transform: 'translateY(-6px)',
+    boxShadow: '0 12px 40px rgba(102, 126, 234, 0.3)',
   },
 }));
 
 const StatusChip = styled(Chip)(({ theme, status }) => ({
-  fontWeight: 500,
+  fontWeight: 600,
+  borderRadius: '12px',
   ...(status === 'published' && {
-    backgroundColor: '#e8f5e8',
-    color: '#2e7d32',
+    backgroundColor: '#d4edda',
+    color: '#155724',
   }),
   ...(status === 'draft' && {
-    backgroundColor: '#fff3e0',
-    color: '#f57c00',
+    backgroundColor: '#fff3cd',
+    color: '#856404',
   }),
   ...(status === 'cancelled' && {
-    backgroundColor: '#ffebee',
-    color: '#c62828',
+    backgroundColor: '#f8d7da',
+    color: '#721c24',
   }),
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
   textTransform: 'none',
-  borderRadius: theme.spacing(1),
+  borderRadius: '12px',
   padding: theme.spacing(1.5, 3),
   fontSize: '1rem',
-  fontWeight: 500,
+  fontWeight: 600,
+  transition: 'all 0.3s ease',
 }));
 
-const MyEventsPage = ({ userId }) => {
+const PrimaryButton = styled(ActionButton)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  color: 'white',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
+  },
+}));
+
+const SecondaryButton = styled(ActionButton)(({ theme }) => ({
+  background: 'white',
+  color: '#667eea',
+  border: '2px solid #667eea',
+  '&:hover': {
+    background: '#667eea',
+    color: 'white',
+    transform: 'translateY(-2px)',
+  },
+}));
+
+const PageHeader = styled(Box)(({ theme }) => ({
+  background: 'rgba(255, 255, 255, 0.95)',
+  borderRadius: '16px',
+  padding: theme.spacing(3),
+  marginBottom: theme.spacing(3),
+  boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+  backdropFilter: 'blur(10px)',
+  textAlign: 'center',
+}));
+
+const MyEventsPage = ({ userId, userInfo }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
@@ -164,192 +200,222 @@ const MyEventsPage = ({ userId }) => {
 
   if (loading) {
     return (
-      <PageContainer>
-        <Container maxWidth="lg">
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-            <CircularProgress size={60} />
-          </Box>
-        </Container>
-      </PageContainer>
+      <>
+        <SharedHeader currentPage="/events" userInfo={userInfo} />
+        <PageContainer>
+          <Container maxWidth="lg">
+            <Box 
+              display="flex" 
+              justifyContent="center" 
+              alignItems="center" 
+              minHeight="50vh"
+              sx={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '24px',
+                backdropFilter: 'blur(10px)',
+              }}
+            >
+              <Box textAlign="center">
+                <CircularProgress 
+                  size={60} 
+                  sx={{ 
+                    color: 'white',
+                    mb: 2 
+                  }} 
+                />
+                <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                  Loading your events...
+                </Typography>
+              </Box>
+            </Box>
+          </Container>
+        </PageContainer>
+      </>
     );
   }
 
   return (
-    <PageContainer>
-      <Container maxWidth="lg">
-        {/* Header Section */}
-        <StyledPaper sx={{ mb: 4 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap">
-            <Box>
-              <Typography variant="h4" gutterBottom sx={{ fontWeight: 500 }}>
-                My Events
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Manage and view your upcoming events
-              </Typography>
-            </Box>
-            <ActionButton
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              sx={{ mt: isMobile ? 2 : 0 }}
-              onClick={handleCreateEvent}
-            >
-              Create Event
-            </ActionButton>
-          </Box>
-        </StyledPaper>
+    <>
+      <SharedHeader currentPage="/events" userInfo={userInfo} />
+      <PageContainer>
+        <Container maxWidth="lg">
+          {/* Page Header */}
+          <PageHeader>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#2d3748', mb: 1 }}>
+              My Events
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Manage and view your upcoming events
+            </Typography>
+          </PageHeader>
 
-        {/* Error Alert */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 4 }}>
-            {error}
-          </Alert>
-        )}
+          {/* Error Alert */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 4, borderRadius: '12px' }}>
+              {error}
+            </Alert>
+          )}
 
-        {/* Events List */}
-        {events.length === 0 ? (
-          <StyledPaper>
-            <Box textAlign="center" py={6}>
-              <EventIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                No events yet
-              </Typography>
-              <Typography variant="body2" color="text.secondary" mb={3}>
-                Create your first event to get started
-              </Typography>
-              <ActionButton variant="contained" color="primary" startIcon={<AddIcon />} onClick={handleCreateEvent}>
-                Create Your First Event
-              </ActionButton>
-            </Box>
-          </StyledPaper>
-        ) : (
-          <Grid container spacing={3}>
-            {events.map((event) => (
-              <Grid item xs={12} sm={6} lg={4} key={event.id}>
-                <EventCard>
-                  <CardContent>
-                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="h2" sx={{ fontSize: '1.5rem' }}>
-                          {getEventTypeIcon(event.event_type)}
-                        </Typography>
-                        <StatusChip 
-                          label={event.status} 
-                          size="small" 
-                          status={event.status}
-                        />
+          {/* Events List */}
+          {events.length === 0 ? (
+            <StyledPaper>
+              <Box textAlign="center" py={6}>
+                <EventIcon sx={{ fontSize: 64, color: '#667eea', mb: 2 }} />
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
+                  No events yet 🎉
+                </Typography>
+                <Typography variant="body2" color="text.secondary" mb={3}>
+                  Create your first event to get started and bring people together
+                </Typography>
+                <PrimaryButton startIcon={<AddIcon />} onClick={handleCreateEvent}>
+                  Create Your First Event
+                </PrimaryButton>
+              </Box>
+            </StyledPaper>
+          ) : (
+            <Grid container spacing={3}>
+              {events.map((event) => (
+                <Grid item xs={12} sm={6} lg={4} key={event.id}>
+                  <EventCard>
+                    <CardContent>
+                      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography variant="h2" sx={{ fontSize: '1.5rem' }}>
+                            {getEventTypeIcon(event.event_type)}
+                          </Typography>
+                          <StatusChip 
+                            label={event.status} 
+                            size="small" 
+                            status={event.status}
+                          />
+                        </Box>
+                        <IconButton 
+                          size="small"
+                          onClick={(e) => handleMenuOpen(e, event.id)}
+                        >
+                          <MoreVertIcon />
+                        </IconButton>
                       </Box>
-                      <IconButton 
-                        size="small"
-                        onClick={(e) => handleMenuOpen(e, event.id)}
-                      >
-                        <MoreVertIcon />
-                      </IconButton>
-                    </Box>
 
-                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                      {event.title}
-                    </Typography>
-                    
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      {event.description}
-                    </Typography>
-
-                    <Box display="flex" alignItems="center" gap={1} mb={1}>
-                      <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                      <Typography variant="body2" color="text.secondary">
-                        {formatDate(event.event_date)}
+                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                        {event.title}
                       </Typography>
-                    </Box>
+                      
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        {event.description}
+                      </Typography>
 
-                    {event.venue && (
                       <Box display="flex" alignItems="center" gap={1} mb={1}>
-                        <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                        <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
                         <Typography variant="body2" color="text.secondary">
-                          {event.venue}
+                          {formatDate(event.event_date)}
                         </Typography>
                       </Box>
-                    )}
 
-                    {event.max_attendees > 0 && (
-                      <Box display="flex" alignItems="center" gap={1} mb={2}>
-                        <PeopleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                        <Typography variant="body2" color="text.secondary">
-                          Max {event.max_attendees} attendees
-                        </Typography>
-                      </Box>
-                    )}
+                      {event.venue && (
+                        <Box display="flex" alignItems="center" gap={1} mb={1}>
+                          <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                          <Typography variant="body2" color="text.secondary">
+                            {event.venue}
+                          </Typography>
+                        </Box>
+                      )}
 
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Chip 
-                        label={event.event_type.replace('_', ' ')} 
-                        size="small" 
-                        variant="outlined"
-                        sx={{ textTransform: 'capitalize' }}
-                      />
-                      {event.is_public && (
+                      {event.max_attendees > 0 && (
+                        <Box display="flex" alignItems="center" gap={1} mb={2}>
+                          <PeopleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                          <Typography variant="body2" color="text.secondary">
+                            Max {event.max_attendees} attendees
+                          </Typography>
+                        </Box>
+                      )}
+
+                      <Box display="flex" alignItems="center" gap={1}>
                         <Chip 
-                          label="Public" 
+                          label={event.event_type.replace('_', ' ')} 
                           size="small" 
                           variant="outlined"
-                          color="primary"
+                          sx={{ textTransform: 'capitalize' }}
                         />
-                      )}
-                    </Box>
-                  </CardContent>
+                        {event.is_public && (
+                          <Chip 
+                            label="Public" 
+                            size="small" 
+                            variant="outlined"
+                            color="primary"
+                          />
+                        )}
+                      </Box>
+                    </CardContent>
 
-                  <CardActions sx={{ px: 2, pb: 2 }}>
-                    <Button size="small" startIcon={<VisibilityIcon />} onClick={() => handleViewEvent(event.id)}>
-                      View
-                    </Button>
-                    <Button size="small" startIcon={<EditIcon />} onClick={() => handleEditEvent(event.id)}>
-                      Edit
-                    </Button>
-                  </CardActions>
-                </EventCard>
-              </Grid>
-            ))}
-          </Grid>
-        )}
+                    <CardActions sx={{ px: 2, pb: 2, gap: 1 }}>
+                      <SecondaryButton 
+                        size="small" 
+                        startIcon={<VisibilityIcon />} 
+                        onClick={() => handleViewEvent(event.id)}
+                        sx={{ fontSize: '0.875rem', py: 0.5, px: 1.5 }}
+                      >
+                        View
+                      </SecondaryButton>
+                      <SecondaryButton 
+                        size="small" 
+                        startIcon={<EditIcon />} 
+                        onClick={() => handleEditEvent(event.id)}
+                        sx={{ fontSize: '0.875rem', py: 0.5, px: 1.5 }}
+                      >
+                        Edit
+                      </SecondaryButton>
+                    </CardActions>
+                  </EventCard>
+                </Grid>
+              ))}
+            </Grid>
+          )}
 
-        {/* Action Menu */}
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-        >
-          <MenuItem onClick={() => { handleViewEvent(selectedEventId); handleMenuClose(); }}>
-            <VisibilityIcon sx={{ mr: 1 }} />
-            View Event
-          </MenuItem>
-          <MenuItem onClick={() => { handleEditEvent(selectedEventId); handleMenuClose(); }}>
-            <EditIcon sx={{ mr: 1 }} />
-            Edit Event
-          </MenuItem>
-          <MenuItem onClick={() => handleDeleteEvent(selectedEventId)}>
-            <DeleteIcon sx={{ mr: 1 }} />
-            Delete Event
-          </MenuItem>
-        </Menu>
-
-        {/* Floating Action Button for Mobile */}
-        {isMobile && (
-          <Fab
-            color="primary"
-            aria-label="add"
-            onClick={handleCreateEvent}
-            sx={{
-              position: 'fixed',
-              bottom: 16,
-              right: 16,
-            }}
+          {/* Action Menu */}
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
           >
-            <AddIcon />
-          </Fab>
-        )}
-      </Container>
-    </PageContainer>
+            <MenuItem onClick={() => { handleViewEvent(selectedEventId); handleMenuClose(); }}>
+              <VisibilityIcon sx={{ mr: 1 }} />
+              View Event
+            </MenuItem>
+            <MenuItem onClick={() => { handleEditEvent(selectedEventId); handleMenuClose(); }}>
+              <EditIcon sx={{ mr: 1 }} />
+              Edit Event
+            </MenuItem>
+            <MenuItem onClick={() => handleDeleteEvent(selectedEventId)}>
+              <DeleteIcon sx={{ mr: 1 }} />
+              Delete Event
+            </MenuItem>
+          </Menu>
+
+          {/* Floating Action Button for Mobile */}
+          {isMobile && (
+            <Fab
+              onClick={handleCreateEvent}
+              sx={{
+                position: 'fixed',
+                bottom: 24,
+                right: 24,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                  transform: 'scale(1.1)',
+                },
+                transition: 'all 0.3s ease',
+                boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
+              }}
+            >
+              <AddIcon />
+            </Fab>
+          )}
+        </Container>
+      </PageContainer>
+    </>
   );
 };
 

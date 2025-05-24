@@ -26,24 +26,13 @@ import {
   Save as SaveIcon,
   LocationOn as LocationIcon,
 } from '@mui/icons-material';
+import SharedHeader from './SharedHeader';
 
 const PageContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  padding: theme.spacing(3, 0),
-}));
-
-const Header = styled(Box)(({ theme }) => ({
-  background: 'white',
-  borderRadius: '16px',
-  padding: theme.spacing(2.5),
-  marginBottom: theme.spacing(3),
-  boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  flexWrap: 'wrap',
-  gap: theme.spacing(2),
+  paddingTop: theme.spacing(12), // Space for floating header
+  paddingBottom: theme.spacing(4),
 }));
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -81,6 +70,16 @@ const SecondaryButton = styled(ActionButton)(({ theme }) => ({
     color: 'white',
     transform: 'translateY(-2px)',
   },
+}));
+
+const PageHeader = styled(Box)(({ theme }) => ({
+  background: 'rgba(255, 255, 255, 0.95)',
+  borderRadius: '16px',
+  padding: theme.spacing(3),
+  marginBottom: theme.spacing(3),
+  boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+  backdropFilter: 'blur(10px)',
+  textAlign: 'center',
 }));
 
 // Google Places Autocomplete Component
@@ -189,7 +188,7 @@ const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
   );
 };
 
-const CreateEventPage = ({ userId }) => {
+const CreateEventPage = ({ userId, userInfo }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -356,225 +355,209 @@ const CreateEventPage = ({ userId }) => {
   }
 
   return (
-    <PageContainer>
-      <Container maxWidth="md">
-        {/* Header */}
-        <Header>
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              color: '#667eea',
-              fontSize: '24px',
-            }}
-          >
-            EventHub
-          </Typography>
-          <SecondaryButton
-            onClick={() => window.location.href = '/events'}
-            startIcon={<ArrowBackIcon />}
-          >
-            Back to Events
-          </SecondaryButton>
-        </Header>
-
-        {/* Error Alert */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 4 }}>
-            {error}
-          </Alert>
-        )}
-
-        {/* Form */}
-        <StyledPaper>
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
+    <>
+      <SharedHeader currentPage="/create-event" userInfo={userInfo} />
+      <PageContainer>
+        <Container maxWidth="md">
+          {/* Page Header */}
+          <PageHeader>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#2d3748', mb: 1 }}>
               Create New Event 🎉
             </Typography>
             <Typography variant="body1" color="text.secondary">
               Fill in the details for your amazing event
             </Typography>
-          </Box>
+          </PageHeader>
 
-          <Box component="form" onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              {/* Basic Information */}
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
-                  Basic Information
-                </Typography>
-              </Grid>
+          {/* Error Alert */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 4, borderRadius: '12px' }}>
+              {error}
+            </Alert>
+          )}
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Event Title"
-                  value={formData.title}
-                  onChange={handleChange('title')}
-                  required
-                  placeholder="e.g., John's 30th Birthday Party"
-                />
-              </Grid>
+          {/* Form */}
+          <StyledPaper>
+            <Box component="form" onSubmit={handleSubmit}>
+              <Grid container spacing={3}>
+                {/* Basic Information */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+                    Basic Information
+                  </Typography>
+                </Grid>
 
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Description"
-                  value={formData.description}
-                  onChange={handleChange('description')}
-                  multiline
-                  rows={3}
-                  placeholder="Tell people about your event..."
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Event Type</InputLabel>
-                  <Select
-                    value={formData.event_type}
-                    onChange={handleChange('event_type')}
-                    label="Event Type"
-                  >
-                    {eventTypes.map((type) => (
-                      <MenuItem key={type.value} value={type.value}>
-                        {type.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    value={formData.status}
-                    onChange={handleChange('status')}
-                    label="Status"
-                  >
-                    <MenuItem value="draft">📝 Draft</MenuItem>
-                    <MenuItem value="published">✅ Published</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              {/* Date and Location */}
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mt: 2 }}>
-                  Date & Location
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Event Date & Time"
-                  type="datetime-local"
-                  value={formData.event_date}
-                  onChange={handleChange('event_date')}
-                  required
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                {mapsLoaded ? (
-                  <GooglePlacesAutocomplete
-                    fullWidth
-                    label="Venue"
-                    value={formData.venue}
-                    onChange={handleChange('venue')}
-                    placeholder="Search for venues, restaurants, parks..."
-                    helperText="Start typing to search for places"
-                  />
-                ) : (
+                <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Venue"
-                    value={formData.venue}
-                    onChange={handleChange('venue')}
-                    placeholder="e.g., Central Park, 123 Main St"
-                    InputProps={{
-                      startAdornment: <LocationIcon sx={{ color: '#667eea', mr: 1 }} />,
-                    }}
-                    helperText="Loading location search..."
+                    label="Event Title"
+                    value={formData.title}
+                    onChange={handleChange('title')}
+                    required
+                    placeholder="e.g., John's 30th Birthday Party"
                   />
-                )}
-              </Grid>
+                </Grid>
 
-              {/* Additional Settings */}
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mt: 2 }}>
-                  Additional Settings
-                </Typography>
-              </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Description"
+                    value={formData.description}
+                    onChange={handleChange('description')}
+                    multiline
+                    rows={3}
+                    placeholder="Tell people about your event..."
+                  />
+                </Grid>
 
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Max Attendees"
-                  type="number"
-                  value={formData.max_attendees}
-                  onChange={handleChange('max_attendees')}
-                  placeholder="0 for unlimited"
-                  inputProps={{ min: 0 }}
-                />
-              </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth required>
+                    <InputLabel>Event Type</InputLabel>
+                    <Select
+                      value={formData.event_type}
+                      onChange={handleChange('event_type')}
+                      label="Event Type"
+                    >
+                      {eventTypes.map((type) => (
+                        <MenuItem key={type.value} value={type.value}>
+                          {type.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
 
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Event Image URL"
-                  value={formData.image}
-                  onChange={handleChange('image')}
-                  placeholder="https://example.com/image.jpg"
-                />
-              </Grid>
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      value={formData.status}
+                      onChange={handleChange('status')}
+                      label="Status"
+                    >
+                      <MenuItem value="draft">📝 Draft</MenuItem>
+                      <MenuItem value="published">✅ Published</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
 
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.is_public}
-                      onChange={handleChange('is_public')}
-                      color="primary"
+                {/* Date and Location */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mt: 2 }}>
+                    Date & Location
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Event Date & Time"
+                    type="datetime-local"
+                    value={formData.event_date}
+                    onChange={handleChange('event_date')}
+                    required
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  {mapsLoaded ? (
+                    <GooglePlacesAutocomplete
+                      fullWidth
+                      label="Venue"
+                      value={formData.venue}
+                      onChange={handleChange('venue')}
+                      placeholder="Search for venues, restaurants, parks..."
+                      helperText="Start typing to search for places"
                     />
-                  }
-                  label="Make this event public"
-                />
-                <Typography variant="body2" color="text.secondary" sx={{ ml: 4 }}>
-                  Public events can be discovered by other users
-                </Typography>
-              </Grid>
+                  ) : (
+                    <TextField
+                      fullWidth
+                      label="Venue"
+                      value={formData.venue}
+                      onChange={handleChange('venue')}
+                      placeholder="e.g., Central Park, 123 Main St"
+                      InputProps={{
+                        startAdornment: <LocationIcon sx={{ color: '#667eea', mr: 1 }} />,
+                      }}
+                      helperText="Loading location search..."
+                    />
+                  )}
+                </Grid>
 
-              {/* Submit Button */}
-              <Grid item xs={12}>
-                <Box display="flex" gap={2} justifyContent="flex-end" sx={{ mt: 3 }}>
-                  <SecondaryButton
-                    variant="outlined"
-                    onClick={() => window.location.href = '/events'}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </SecondaryButton>
-                  <PrimaryButton
-                    type="submit"
-                    variant="contained"
-                    disabled={loading}
-                    startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-                  >
-                    {loading ? 'Creating...' : 'Create Event'}
-                  </PrimaryButton>
-                </Box>
+                {/* Additional Settings */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mt: 2 }}>
+                    Additional Settings
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Max Attendees"
+                    type="number"
+                    value={formData.max_attendees}
+                    onChange={handleChange('max_attendees')}
+                    placeholder="0 for unlimited"
+                    inputProps={{ min: 0 }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Event Image URL"
+                    value={formData.image}
+                    onChange={handleChange('image')}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.is_public}
+                        onChange={handleChange('is_public')}
+                        color="primary"
+                      />
+                    }
+                    label="Make this event public"
+                  />
+                  <Typography variant="body2" color="text.secondary" sx={{ ml: 4 }}>
+                    Public events can be discovered by other users
+                  </Typography>
+                </Grid>
+
+                {/* Submit Button */}
+                <Grid item xs={12}>
+                  <Box display="flex" gap={2} justifyContent="flex-end" sx={{ mt: 3 }}>
+                    <SecondaryButton
+                      variant="outlined"
+                      onClick={() => window.location.href = '/events'}
+                      disabled={loading}
+                    >
+                      Cancel
+                    </SecondaryButton>
+                    <PrimaryButton
+                      type="submit"
+                      variant="contained"
+                      disabled={loading}
+                      startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+                    >
+                      {loading ? 'Creating...' : 'Create Event'}
+                    </PrimaryButton>
+                  </Box>
+                </Grid>
               </Grid>
-            </Grid>
-          </Box>
-        </StyledPaper>
-      </Container>
-    </PageContainer>
+            </Box>
+          </StyledPaper>
+        </Container>
+      </PageContainer>
+    </>
   );
 };
 
