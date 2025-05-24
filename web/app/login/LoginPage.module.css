@@ -1,0 +1,44 @@
+.loginContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: white;
+}
+
+.title {
+  color: #1976d2;
+  margin-bottom: 2rem !important;
+  font-weight: 600 !important;
+}
+
+.submitButton {
+  background-color: #1976d2 !important;
+  color: white !important;
+  padding: 0.75rem !important;
+  font-size: 1rem !important;
+  text-transform: none !important;
+}
+
+.submitButton:hover {
+  background-color: #1565c0 !important;
+}
+
+.signUpButton {
+  color: #1976d2 !important;
+  text-transform: none !important;
+  font-size: 0.9rem !important;
+}
+
+.signUpButton:hover {
+  background-color: rgba(25, 118, 210, 0.04) !important;
+} 

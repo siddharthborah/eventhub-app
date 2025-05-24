@@ -7,6 +7,8 @@ import (
 	"github.com/joho/godotenv"
 
 	"01-Login/platform/authenticator"
+	"01-Login/platform/database"
+	"01-Login/platform/models"
 	"01-Login/platform/router"
 )
 
@@ -14,6 +16,16 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Failed to load the env vars: %v", err)
 	}
+
+	// Initialize database
+	database.Connect()
+
+	// Run migrations
+	database.Migrate(
+		&models.User{},
+		&models.Item{},
+		&models.Event{},
+	)
 
 	auth, err := authenticator.New()
 	if err != nil {
