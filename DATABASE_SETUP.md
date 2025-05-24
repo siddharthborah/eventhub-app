@@ -48,7 +48,6 @@ docker run --name postgres-loginapp \
 The application will automatically run migrations when it starts. The following tables will be created:
 
 - `users` - User information with Auth0 integration
-- `items` - Generic items/products with user relationships
 - `events` - Events like birthdays, anniversaries, house parties, etc.
 
 ## API Endpoints
@@ -61,18 +60,7 @@ The application will automatically run migrations when it starts. The following 
 - `PUT /api/users/:id` - Update user
 - `DELETE /api/users/:id` - Delete user
 - `GET /api/users/email/:email` - Get user by email
-- `GET /api/users/:id/items` - Get all items for a user
 - `GET /api/users/:id/events` - Get all events for a user
-
-### Item CRUD Operations
-
-- `POST /api/items` - Create a new item
-- `GET /api/items` - Get all items (with pagination and filtering)
-- `GET /api/items/:id` - Get item by ID
-- `PUT /api/items/:id` - Update item
-- `DELETE /api/items/:id` - Delete item
-- `GET /api/items/available` - Get only available items
-- `GET /api/items/search?q=term` - Search items by name or description
 
 ### Event CRUD Operations
 
@@ -90,8 +78,7 @@ The application will automatically run migrations when it starts. The following 
 
 For pagination and filtering:
 - `page` - Page number (default: 1)
-- `page_size` - Items per page (default: 10, max: 100)
-- `category` - Filter by category (items)
+- `page_size` - Events per page (default: 10, max: 100)
 - `event_type` - Filter by event type (events: birthday, anniversary, house_party, wedding, etc.)
 - `status` - Filter by status (events: draft, published, cancelled)
 - `user_id` - Filter by user ID
@@ -106,19 +93,6 @@ curl -X POST http://localhost:3000/api/users \
     "email": "user@example.com",
     "name": "John Doe",
     "auth_id": "auth0|123456789"
-  }'
-```
-
-### Create an Item
-```bash
-curl -X POST http://localhost:3000/api/items \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Sample Item",
-    "description": "A sample item for testing",
-    "price": 29.99,
-    "category": "electronics",
-    "user_id": "user-uuid-here"
   }'
 ```
 
@@ -138,11 +112,6 @@ curl -X POST http://localhost:3000/api/events \
     "status": "published",
     "user_id": "user-uuid-here"
   }'
-```
-
-### Get Items with Pagination
-```bash
-curl "http://localhost:3000/api/items?page=1&page_size=5&category=electronics"
 ```
 
 ### Get Events by Type
@@ -165,9 +134,9 @@ curl "http://localhost:3000/api/events/date-range?start_date=2024-06-01&end_date
 - **UUID Primary Keys** - All models use UUID for better security and distribution
 - **Soft Deletes** - Records are marked as deleted rather than permanently removed
 - **Pagination** - All list endpoints support pagination
-- **Filtering** - Items can be filtered by category, user, availability; Events by type, status, user
-- **Search** - Full-text search on item names/descriptions and event titles/descriptions
-- **Relationships** - Foreign key relationships between users and items/events
+- **Filtering** - Events can be filtered by type, status, user, and date ranges
+- **Search** - Full-text search on event titles and descriptions
+- **Relationships** - Foreign key relationships between users and events
 - **Auto-Migration** - Database schema is automatically created/updated
 - **Environment Configuration** - Database connection configurable via environment variables
 - **Date Range Queries** - Events can be queried by date ranges
@@ -188,22 +157,6 @@ type User struct {
     IsActive  bool      `json:"is_active"`
     CreatedAt time.Time `json:"created_at"`
     UpdatedAt time.Time `json:"updated_at"`
-}
-```
-
-### Item Model
-```go
-type Item struct {
-    ID          uuid.UUID `json:"id"`
-    Name        string    `json:"name"`
-    Description string    `json:"description"`
-    Price       float64   `json:"price"`
-    Category    string    `json:"category"`
-    IsAvailable bool      `json:"is_available"`
-    UserID      uuid.UUID `json:"user_id"`
-    User        User      `json:"user"`
-    CreatedAt   time.Time `json:"created_at"`
-    UpdatedAt   time.Time `json:"updated_at"`
 }
 ```
 
@@ -240,8 +193,4 @@ Common event types supported:
 - `workshop` - Workshops and training
 - `social` - General social gatherings
 
-## Event Statuses
-
-- `draft` - Event is being planned but not yet published
-- `published` - Event is live and visible to others
-- `cancelled` - Event has been cancelled 
+## Event Statuses 

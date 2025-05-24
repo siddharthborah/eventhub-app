@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Test script for the CRUD API endpoints
+# Test script for the Events Management API endpoints
 BASE_URL="http://localhost:3000/api"
 
-echo "🧪 Testing CRUD API Endpoints"
+echo "🧪 Testing Events Management API"
 echo "================================"
 
 # Test 1: Create a user
@@ -11,7 +11,7 @@ echo "📝 Creating a test user..."
 USER_RESPONSE=$(curl -s -X POST $BASE_URL/users \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "test@example.com",
+    "email": "testuser@example.com",
     "name": "Test User",
     "auth_id": "test123"
   }')
@@ -26,54 +26,80 @@ echo "📋 Getting all users..."
 curl -s "$BASE_URL/users" | python3 -m json.tool
 echo
 
-# Test 3: Create an item
-echo "📝 Creating a test item..."
-ITEM_RESPONSE=$(curl -s -X POST $BASE_URL/items \
+# Test 3: Get user by ID
+echo "👤 Getting user by ID..."
+curl -s "$BASE_URL/users/$USER_ID" | python3 -m json.tool
+echo
+
+# Test 4: Create an event
+echo "📝 Creating a test event..."
+EVENT_RESPONSE=$(curl -s -X POST $BASE_URL/events \
   -H "Content-Type: application/json" \
   -d "{
-    \"name\": \"Test Item\",
-    \"description\": \"A test item for verification\",
-    \"price\": 29.99,
-    \"category\": \"electronics\",
+    \"title\": \"Test Birthday Party\",
+    \"description\": \"A test event for API verification\",
+    \"venue\": \"Test Venue\",
+    \"event_date\": \"2024-12-25T18:00:00Z\",
+    \"event_type\": \"birthday\",
+    \"is_public\": true,
+    \"max_attendees\": 50,
+    \"status\": \"published\",
     \"user_id\": \"$USER_ID\"
   }")
 
-echo "Response: $ITEM_RESPONSE"
-ITEM_ID=$(echo $ITEM_RESPONSE | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
-echo "Created item with ID: $ITEM_ID"
+echo "Response: $EVENT_RESPONSE"
+EVENT_ID=$(echo $EVENT_RESPONSE | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
+echo "Created event with ID: $EVENT_ID"
 echo
 
-# Test 4: Get all items
-echo "📋 Getting all items..."
-curl -s "$BASE_URL/items" | python3 -m json.tool
+# Test 5: Get all events
+echo "📋 Getting all events..."
+curl -s "$BASE_URL/events" | python3 -m json.tool
 echo
 
-# Test 5: Get available items
-echo "📋 Getting available items..."
-curl -s "$BASE_URL/items/available" | python3 -m json.tool
+# Test 6: Get public events
+echo "🌍 Getting public events..."
+curl -s "$BASE_URL/events/public" | python3 -m json.tool
 echo
 
-# Test 6: Search items
-echo "🔍 Searching for 'test'..."
-curl -s "$BASE_URL/items/search?q=test" | python3 -m json.tool
+# Test 7: Get upcoming events
+echo "📅 Getting upcoming events..."
+curl -s "$BASE_URL/events/upcoming" | python3 -m json.tool
 echo
 
-# Test 7: Update item
-echo "✏️ Updating item..."
-UPDATE_RESPONSE=$(curl -s -X PUT $BASE_URL/items/$ITEM_ID \
+# Test 8: Search events
+echo "🔍 Searching for 'birthday'..."
+curl -s "$BASE_URL/events/search?q=birthday" | python3 -m json.tool
+echo
+
+# Test 9: Update event
+echo "✏️ Updating event..."
+UPDATE_RESPONSE=$(curl -s -X PUT $BASE_URL/events/$EVENT_ID \
   -H "Content-Type: application/json" \
   -d '{
-    "price": 39.99,
-    "description": "Updated test item"
+    "title": "Updated Birthday Party",
+    "description": "Updated test event description",
+    "max_attendees": 75
   }')
 
 echo "Response: $UPDATE_RESPONSE"
 echo
 
-# Test 8: Get user items
-echo "📋 Getting items for user..."
-curl -s "$BASE_URL/users/$USER_ID/items" | python3 -m json.tool
+# Test 10: Get user events
+echo "📋 Getting events for user..."
+curl -s "$BASE_URL/users/$USER_ID/events" | python3 -m json.tool
+echo
+
+# Test 11: Get event by ID
+echo "🎉 Getting event by ID..."
+curl -s "$BASE_URL/events/$EVENT_ID" | python3 -m json.tool
+echo
+
+# Test 12: Test pagination
+echo "📄 Testing pagination (page 1, 2 events per page)..."
+curl -s "$BASE_URL/events?page=1&page_size=2" | python3 -m json.tool
 echo
 
 echo "✅ API tests completed!"
-echo "💡 Remember to set up your database environment variables in .env" 
+echo "💡 Note: Some tests may fail if the database is empty or if the server is not running"
+echo "🚀 To run the comprehensive events API test, use: ./test_events_api.sh" 

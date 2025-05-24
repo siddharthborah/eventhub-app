@@ -128,6 +128,16 @@ const MyEventsPage = ({ userId }) => {
     window.location.href = '/create-event';
   };
 
+  const handleViewEvent = (eventId) => {
+    window.location.href = `/events/${eventId}`;
+  };
+
+  const handleEditEvent = (eventId) => {
+    // TODO: Implement edit functionality when edit page is created
+    console.log('Edit event:', eventId);
+    // window.location.href = `/edit-event/${eventId}`;
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -290,10 +300,10 @@ const MyEventsPage = ({ userId }) => {
                   </CardContent>
 
                   <CardActions sx={{ px: 2, pb: 2 }}>
-                    <Button size="small" startIcon={<VisibilityIcon />}>
+                    <Button size="small" startIcon={<VisibilityIcon />} onClick={() => handleViewEvent(event.id)}>
                       View
                     </Button>
-                    <Button size="small" startIcon={<EditIcon />}>
+                    <Button size="small" startIcon={<EditIcon />} onClick={() => handleEditEvent(event.id)}>
                       Edit
                     </Button>
                   </CardActions>
@@ -309,7 +319,11 @@ const MyEventsPage = ({ userId }) => {
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
         >
-          <MenuItem onClick={handleMenuClose}>
+          <MenuItem onClick={() => { handleViewEvent(selectedEventId); handleMenuClose(); }}>
+            <VisibilityIcon sx={{ mr: 1 }} />
+            View Event
+          </MenuItem>
+          <MenuItem onClick={() => { handleEditEvent(selectedEventId); handleMenuClose(); }}>
             <EditIcon sx={{ mr: 1 }} />
             Edit Event
           </MenuItem>

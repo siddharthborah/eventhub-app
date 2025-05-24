@@ -53,11 +53,11 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 	router.GET("/user", middleware.IsAuthenticated, user.Handler)
 	router.GET("/events", middleware.IsAuthenticated, events.Handler)
 	router.GET("/create-event", middleware.IsAuthenticated, createevent.Handler)
+	router.GET("/events/:id", events.DetailHandler)
 	router.GET("/logout", logout.Handler)
 
 	// Initialize controllers
 	userController := controllers.NewUserController()
-	itemController := controllers.NewItemController()
 	eventController := controllers.NewEventController()
 
 	// API routes
@@ -72,20 +72,7 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 			users.PUT("/:id", userController.UpdateUser)
 			users.DELETE("/:id", userController.DeleteUser)
 			users.GET("/email/:email", userController.GetUserByEmail)
-			users.GET("/:id/items", itemController.GetUserItems)
 			users.GET("/:id/events", eventController.GetUserEvents)
-		}
-
-		// Item routes
-		items := api.Group("/items")
-		{
-			items.POST("", itemController.CreateItem)
-			items.GET("", itemController.GetItems)
-			items.GET("/available", itemController.GetAvailableItems)
-			items.GET("/search", itemController.SearchItems)
-			items.GET("/:id", itemController.GetItem)
-			items.PUT("/:id", itemController.UpdateItem)
-			items.DELETE("/:id", itemController.DeleteItem)
 		}
 
 		// Event routes

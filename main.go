@@ -23,7 +23,6 @@ func main() {
 	// Run migrations
 	database.Migrate(
 		&models.User{},
-		&models.Item{},
 		&models.Event{},
 	)
 
