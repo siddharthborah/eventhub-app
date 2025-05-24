@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -24,6 +24,7 @@ import {
   ArrowBack as ArrowBackIcon,
   Event as EventIcon,
   Save as SaveIcon,
+  LocationOn as LocationIcon,
 } from '@mui/icons-material';
 
 const PageContainer = styled(Box)(({ theme }) => ({
@@ -82,6 +83,112 @@ const SecondaryButton = styled(ActionButton)(({ theme }) => ({
   },
 }));
 
+// Google Places Autocomplete Component
+const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
+  const inputRef = useRef(null);
+  const autocompleteRef = useRef(null);
+  const [inputValue, setInputValue] = useState(value || '');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!window.google || !inputRef.current) return;
+
+    try {
+      // Initialize Google Places Autocomplete
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(
+        inputRef.current,
+        {
+          types: ['establishment', 'geocode'],
+          fields: ['name', 'formatted_address', 'geometry', 'place_id', 'types', 'business_status'],
+        }
+      );
+
+      // Handle place selection
+      const handlePlaceSelect = () => {
+        const place = autocompleteRef.current.getPlace();
+        
+        if (place && (place.formatted_address || place.name)) {
+          const venueData = {
+            name: place.name || '',
+            address: place.formatted_address || place.name,
+            placeId: place.place_id || '',
+            coordinates: place.geometry ? {
+              lat: place.geometry.location.lat(),
+              lng: place.geometry.location.lng(),
+            } : null,
+            businessStatus: place.business_status || 'OPERATIONAL',
+            types: place.types || [],
+          };
+          
+          const displayValue = place.formatted_address || place.name;
+          setInputValue(displayValue);
+          onChange(venueData);
+          setIsLoading(false);
+        }
+      };
+
+      autocompleteRef.current.addListener('place_changed', handlePlaceSelect);
+
+      return () => {
+        if (autocompleteRef.current) {
+          window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        }
+      };
+    } catch (error) {
+      console.error('Error initializing Google Places Autocomplete:', error);
+      setIsLoading(false);
+    }
+  }, [onChange]);
+
+  // Update input value when prop changes
+  useEffect(() => {
+    if (value !== inputValue) {
+      setInputValue(value || '');
+    }
+  }, [value]);
+
+  const handleInputChange = (e) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    
+    // Set loading state when user starts typing
+    if (newValue.length > 2) {
+      setIsLoading(true);
+    } else {
+      setIsLoading(false);
+    }
+    
+    // If user is typing manually, pass the string value
+    if (typeof onChange === 'function') {
+      onChange(newValue);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    // Clear loading state on Enter or Escape
+    if (e.key === 'Enter' || e.key === 'Escape') {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <TextField
+      {...props}
+      inputRef={inputRef}
+      value={inputValue}
+      onChange={handleInputChange}
+      onKeyDown={handleKeyDown}
+      InputProps={{
+        startAdornment: <LocationIcon sx={{ color: '#667eea', mr: 1 }} />,
+        endAdornment: isLoading ? (
+          <CircularProgress size={20} sx={{ color: '#667eea' }} />
+        ) : null,
+        ...props.InputProps,
+      }}
+    />
+  );
+};
+
 const CreateEventPage = ({ userId }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -94,6 +201,7 @@ const CreateEventPage = ({ userId }) => {
     title: '',
     description: '',
     venue: '',
+    venueData: null, // Store additional venue information
     event_date: defaultDateTime,
     image: '',
     event_type: 'birthday',
@@ -105,6 +213,45 @@ const CreateEventPage = ({ userId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [mapsLoaded, setMapsLoaded] = useState(false);
+
+  // Load Google Maps API
+  useEffect(() => {
+    if (window.google && window.google.maps) {
+      setMapsLoaded(true);
+      return;
+    }
+
+    // You need to set your Google Maps API key here
+    // Get your API key from: https://console.cloud.google.com/apis/credentials
+    // Make sure to enable Places API for your project
+    const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'YOUR_GOOGLE_MAPS_API_KEY';
+    
+    if (GOOGLE_MAPS_API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY') {
+      console.warn('Google Maps API key not configured. Set REACT_APP_GOOGLE_MAPS_API_KEY environment variable.');
+      setMapsLoaded(false);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setMapsLoaded(true);
+    script.onerror = () => {
+      console.error('Failed to load Google Maps API. Check your API key and internet connection.');
+      setMapsLoaded(false);
+    };
+    
+    document.head.appendChild(script);
+
+    return () => {
+      const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
+      if (existingScript) {
+        document.head.removeChild(existingScript);
+      }
+    };
+  }, []);
 
   const eventTypes = [
     { value: 'birthday', label: '🎂 Birthday', icon: '🎂' },
@@ -118,12 +265,33 @@ const CreateEventPage = ({ userId }) => {
     { value: 'social', label: '🎉 Social Gathering', icon: '🎉' },
   ];
 
-  const handleChange = (field) => (event) => {
-    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleChange = (field) => (value) => {
+    if (field === 'venue') {
+      // Handle venue data from Google Places or regular text input
+      if (typeof value === 'object' && value.address) {
+        // From Google Places selection
+        setFormData(prev => ({
+          ...prev,
+          venue: value.address,
+          venueData: value,
+        }));
+      } else {
+        // Regular text input or event object
+        const inputValue = value?.target ? value.target.value : value;
+        setFormData(prev => ({
+          ...prev,
+          venue: inputValue,
+          venueData: null,
+        }));
+      }
+    } else {
+      // Handle other form fields
+      const inputValue = value?.target ? (value.target.type === 'checkbox' ? value.target.checked : value.target.value) : value;
+      setFormData(prev => ({
+        ...prev,
+        [field]: inputValue
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -313,13 +481,28 @@ const CreateEventPage = ({ userId }) => {
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Venue"
-                  value={formData.venue}
-                  onChange={handleChange('venue')}
-                  placeholder="e.g., Central Park, 123 Main St"
-                />
+                {mapsLoaded ? (
+                  <GooglePlacesAutocomplete
+                    fullWidth
+                    label="Venue"
+                    value={formData.venue}
+                    onChange={handleChange('venue')}
+                    placeholder="Search for venues, restaurants, parks..."
+                    helperText="Start typing to search for places"
+                  />
+                ) : (
+                  <TextField
+                    fullWidth
+                    label="Venue"
+                    value={formData.venue}
+                    onChange={handleChange('venue')}
+                    placeholder="e.g., Central Park, 123 Main St"
+                    InputProps={{
+                      startAdornment: <LocationIcon sx={{ color: '#667eea', mr: 1 }} />,
+                    }}
+                    helperText="Loading location search..."
+                  />
+                )}
               </Grid>
 
               {/* Additional Settings */}
