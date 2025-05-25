@@ -3,6 +3,7 @@ package router
 import (
 	"encoding/gob"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -30,7 +31,13 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 	// we must first register them using gob.Register
 	gob.Register(map[string]interface{}{})
 
-	store := cookie.NewStore([]byte("secret"))
+	// Use environment variable for session secret, fallback to a default for development
+	sessionSecret := os.Getenv("SESSION_SECRET")
+	if sessionSecret == "" {
+		sessionSecret = "your-secret-key-change-in-production"
+	}
+
+	store := cookie.NewStore([]byte(sessionSecret))
 	store.Options(sessions.Options{
 		Path:     "/",
 		MaxAge:   int(24 * time.Hour.Seconds()),

@@ -76,6 +76,9 @@ AUTH0_CLIENT_ID=your-auth0-client-id
 AUTH0_CLIENT_SECRET=your-auth0-client-secret
 AUTH0_CALLBACK_URL=http://localhost:3000/callback
 
+# Session Configuration
+SESSION_SECRET=your-random-session-secret-key
+
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
