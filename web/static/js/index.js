@@ -6,6 +6,7 @@ import LandingPage from './components/LandingPage';
 import UserDashboard from './components/UserDashboard';
 import MyEventsPage from './components/MyEventsPage';
 import CreateEventPage from './components/CreateEventPage';
+import EditEventPage from './components/EditEventPage';
 import EventDetailPage from './components/EventDetailPage';
 
 const theme = createTheme({
@@ -54,6 +55,7 @@ const pageType = window.pageType;
 const userData = window.userData;
 const userId = window.userId;
 const eventId = window.eventId;
+const eventData = window.eventData;
 
 // Determine which component to render
 let ComponentToRender;
@@ -61,6 +63,8 @@ if (pageType === 'events') {
   ComponentToRender = <MyEventsPage userId={userId} userInfo={userData} />;
 } else if (pageType === 'create-event') {
   ComponentToRender = <CreateEventPage userId={userId} userInfo={userData} />;
+} else if (pageType === 'edit-event') {
+  ComponentToRender = <EditEventPage userId={userId} userInfo={userData} eventId={eventId} eventData={eventData} />;
 } else if (pageType === 'event-detail') {
   ComponentToRender = <EventDetailPage eventId={eventId} userInfo={userData} />;
 } else if (userData) {

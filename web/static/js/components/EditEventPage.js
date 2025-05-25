@@ -11,8 +11,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Switch,
   Alert,
   CircularProgress,
   IconButton,
@@ -76,6 +74,16 @@ const SecondaryButton = styled(ActionButton)(({ theme }) => ({
   },
 }));
 
+const eventTypes = [
+  { value: 'birthday', label: '🎂 Birthday' },
+  { value: 'anniversary', label: '💑 Anniversary' },
+  { value: 'house_party', label: '🏠 House Party' },
+  { value: 'wedding', label: '💒 Wedding' },
+  { value: 'graduation', label: '🎓 Graduation' },
+  { value: 'corporate', label: '🏢 Corporate Event' },
+  { value: 'other', label: '🎉 Other' },
+];
+
 // Google Places Autocomplete Component
 const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
   const inputRef = useRef(null);
@@ -85,21 +93,17 @@ const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
 
   useEffect(() => {
     if (!window.google || !window.google.maps || !window.google.maps.places || !inputRef.current) {
-      // Google Maps API not loaded yet, or ref not available
       return;
     }
 
-    // Initialize Google Places Autocomplete
     autocompleteRef.current = new window.google.maps.places.Autocomplete(
       inputRef.current,
       {
-        types: ['establishment', 'geocode'], // Common types for venues
+        types: ['establishment', 'geocode'],
         fields: ['name', 'formatted_address', 'geometry', 'place_id', 'types', 'business_status'],
-        // componentRestrictions: { country: "us" }, // Optional: restrict to a country
       }
     );
 
-    // Event listener for when a place is selected
     const placeChangedListener = autocompleteRef.current.addListener('place_changed', () => {
       setIsLoading(true);
       const place = autocompleteRef.current.getPlace();
@@ -118,12 +122,11 @@ const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
         };
         
         const displayValue = place.formatted_address || place.name || '';
-        setInputValue(displayValue); // Update our local state for the input field
+        setInputValue(displayValue);
         if (typeof onChange === 'function') {
-          onChange(venueData); // Pass the rich venue object to the parent
+          onChange(venueData);
         }
       } else {
-        // If place is not valid, or no details, pass current input text
         if (typeof onChange === 'function') {
           onChange(inputRef.current.value);
         }
@@ -132,19 +135,13 @@ const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
     });
 
     return () => {
-      // Clean up listeners when the component unmounts
       if (autocompleteRef.current) {
         window.google.maps.event.removeListener(placeChangedListener);
         window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
-        // The following line can cause issues if Google's dropdown is still present
-        // const pacContainers = document.querySelectorAll('.pac-container');
-        // pacContainers.forEach(container => container.remove());
       }
     };
-  }, [onChange]); // Rerun effect if onChange prop changes
+  }, [onChange]);
 
-  // Effect to update inputValue if the external 'value' prop changes
-  // This is important if the parent form resets or loads initial data
   useEffect(() => {
     if (value !== inputValue) {
       setInputValue(value || '');
@@ -154,11 +151,8 @@ const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
   const handleInputChange = (event) => {
     const newValue = event.target.value;
     setInputValue(newValue);
-    setIsLoading(newValue.length > 0); // Show loader while typing
+    setIsLoading(newValue.length > 0);
     
-    // If user is typing manually, we should still call onChange
-    // but with the raw string, not a venue object.
-    // The parent component's handleChange for 'venue' already handles this.
     if (typeof onChange === 'function') {
       onChange(newValue);
     }
@@ -166,28 +160,25 @@ const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
   
   const handleInputKeyDown = (event) => {
     if (event.key === 'Enter') {
-        // Prevent form submission if user hits Enter in autocomplete input
-        // Google's widget handles Enter to select the highlighted item
-        const pacItemSelected = document.querySelector('.pac-item-selected');
-        if(!pacItemSelected) { // if no item is selected, prevent form submission
-            event.preventDefault();
-        }
+      const pacItemSelected = document.querySelector('.pac-item-selected');
+      if(!pacItemSelected) {
+        event.preventDefault();
+      }
     }
     if (event.key === 'Escape') {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
-
   return (
     <TextField
-      {...props} // Spread other props like label, fullWidth, etc.
-      inputRef={inputRef} // Assign the ref to the underlying input element
-      value={inputValue} // Controlled component
+      {...props}
+      inputRef={inputRef}
+      value={inputValue}
       onChange={handleInputChange}
-      onKeyDown={handleInputKeyDown} // Handle Enter/Escape
+      onKeyDown={handleInputKeyDown}
       InputProps={{
-        ...props.InputProps, // Merge existing InputProps if any
+        ...props.InputProps,
         startAdornment: (
           <LocationIcon sx={{ color: '#667eea', mr: 1 }} />
         ),
@@ -195,130 +186,72 @@ const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
           <CircularProgress size={20} sx={{ color: '#667eea' }} />
         ) : null,
       }}
-      // Ensure browser's native autocomplete doesn't interfere
       autoComplete="off" 
-      // Add a unique name to help differentiate from other autocompletes if necessary
       name="google-places-autocomplete-venue"
     />
   );
 };
 
-const CreateEventPage = ({ userId, userInfo }) => {
+const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  // Format default date for datetime-local input
-  // Default to 1 week from now, at the next full hour
-  const now = new Date();
-  const futureDate = new Date(now.getTime());
-
-  // Set date to 1 week from now
-  futureDate.setDate(now.getDate() + 7);
-
-  // Set time to the next full hour from the current time
-  futureDate.setHours(now.getHours() + 1); // Move to the next hour block
-  futureDate.setMinutes(0);                // Set minutes to 00
-  futureDate.setSeconds(0);                // Set seconds to 00
-  futureDate.setMilliseconds(0);           // Set milliseconds to 00
-
-  // Adjust for timezone to get local time in ISO format YYYY-MM-DDTHH:mm for the input
-  const localFutureDateTime = new Date(futureDate.getTime() - (futureDate.getTimezoneOffset() * 60000));
-  const defaultDateTime = localFutureDateTime.toISOString().slice(0, 16);
+  const autocompleteRef = useRef(null);
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     venue: '',
-    venueData: null, // Store additional venue information
-    event_date: defaultDateTime,
+    venueData: null,
+    event_date: '',
     image: '',
     event_type: 'birthday',
-    max_attendees: 0,
+    max_attendees: '',
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [mapsLoaded, setMapsLoaded] = useState(false);
   const [showAdditionalSettings, setShowAdditionalSettings] = useState(false);
 
-  // Load Google Maps API
+  // Load event data when component mounts
   useEffect(() => {
-    if (window.google && window.google.maps) {
-      setMapsLoaded(true);
-      return;
-    }
+    if (eventData) {
+      // Format the date for datetime-local input
+      const eventDate = new Date(eventData.event_date);
+      const formattedDate = eventDate.toISOString().slice(0, 16);
 
-    // You need to set your Google Maps API key here
-    // Get your API key from: https://console.cloud.google.com/apis/credentials
-    // Make sure to enable Places API for your project
-    const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'YOUR_GOOGLE_MAPS_API_KEY';
-    
-    if (GOOGLE_MAPS_API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY') {
-      console.warn('Google Maps API key not configured. Set REACT_APP_GOOGLE_MAPS_API_KEY environment variable.');
-      setMapsLoaded(false);
-      return;
-    }
+      setFormData({
+        title: eventData.title || '',
+        description: eventData.description || '',
+        venue: eventData.venue || '',
+        venueData: null, // Will be populated if we have enhanced venue data
+        event_date: formattedDate,
+        image: eventData.image || '',
+        event_type: eventData.event_type || 'birthday',
+        max_attendees: eventData.max_attendees || '',
+      });
 
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-    script.onload = () => setMapsLoaded(true);
-    script.onerror = () => {
-      console.error('Failed to load Google Maps API. Check your API key and internet connection.');
-      setMapsLoaded(false);
-    };
-    
-    document.head.appendChild(script);
-
-    return () => {
-      const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
-      if (existingScript) {
-        document.head.removeChild(existingScript);
+      // Show additional settings if any advanced fields are set
+      if (eventData.max_attendees > 0 || eventData.image) {
+        setShowAdditionalSettings(true);
       }
-    };
-  }, []);
-
-  const eventTypes = [
-    { value: 'birthday', label: '🎂 Birthday', icon: '🎂' },
-    { value: 'anniversary', label: '💑 Anniversary', icon: '💑' },
-    { value: 'house_party', label: '🏠 House Party', icon: '🏠' },
-    { value: 'wedding', label: '💒 Wedding', icon: '💒' },
-    { value: 'graduation', label: '🎓 Graduation', icon: '🎓' },
-    { value: 'corporate', label: '🏢 Corporate Event', icon: '🏢' },
-    { value: 'conference', label: '🎯 Conference', icon: '🎯' },
-    { value: 'workshop', label: '🛠️ Workshop', icon: '🛠️' },
-    { value: 'social', label: '🎉 Social Gathering', icon: '🎉' },
-  ];
-
-  const handleChange = (field) => (value) => {
-    if (field === 'venue') {
-      // Handle venue data from Google Places or regular text input
-      if (typeof value === 'object' && value.address) {
-        // From Google Places selection
-        setFormData(prev => ({
-          ...prev,
-          venue: value.address,
-          venueData: value,
-        }));
-      } else {
-        // Regular text input or event object
-        const inputValue = value?.target ? value.target.value : value;
-        setFormData(prev => ({
-          ...prev,
-          venue: inputValue,
-          venueData: null,
-        }));
-      }
-    } else {
-      // Handle other form fields
-      const inputValue = value?.target ? (value.target.type === 'checkbox' ? value.target.checked : value.target.value) : value;
-      setFormData(prev => ({
-        ...prev,
-        [field]: inputValue
-      }));
     }
+  }, [eventData]);
+
+  const handleChange = (field) => (event) => {
+    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleVenueSelect = (venueData) => {
+    setFormData(prev => ({
+      ...prev,
+      venue: venueData.address,
+      venueData: venueData
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -327,40 +260,42 @@ const CreateEventPage = ({ userId, userInfo }) => {
     setError(null);
 
     try {
-      const eventData = {
+      const updateData = {
         ...formData,
-        user_id: userId,
         event_date: new Date(formData.event_date).toISOString(),
         max_attendees: parseInt(formData.max_attendees) || 0,
       };
 
       // Add enhanced venue data if available from Google Places
       if (formData.venueData && typeof formData.venueData === 'object') {
-        eventData.venue_name = formData.venueData.name || '';
-        eventData.venue_place_id = formData.venueData.placeId || '';
+        updateData.venue_name = formData.venueData.name || '';
+        updateData.venue_place_id = formData.venueData.placeId || '';
         if (formData.venueData.coordinates) {
-          eventData.venue_lat = formData.venueData.coordinates.lat || 0;
-          eventData.venue_lng = formData.venueData.coordinates.lng || 0;
+          updateData.venue_lat = formData.venueData.coordinates.lat || 0;
+          updateData.venue_lng = formData.venueData.coordinates.lng || 0;
         }
       }
 
-      const response = await fetch('/api/events', {
-        method: 'POST',
+      // Remove fields that shouldn't be updated
+      delete updateData.venueData;
+
+      const response = await fetch(`/api/events/${eventId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(eventData),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create event');
+        throw new Error(errorData.error || 'Failed to update event');
       }
 
       setSuccess(true);
-      // Redirect to events page after 2 seconds
+      // Redirect to event detail page after 2 seconds
       setTimeout(() => {
-        window.location.href = '/events';
+        window.location.href = `/events/${eventId}`;
       }, 2000);
     } catch (err) {
       setError(err.message);
@@ -371,32 +306,51 @@ const CreateEventPage = ({ userId, userInfo }) => {
 
   if (success) {
     return (
-      <PageContainer>
-        <Container maxWidth="md">
-          <StyledPaper>
-            <Box textAlign="center" py={6}>
-              <Typography variant="h2" sx={{ fontSize: '4rem', mb: 2 }}>
-                🎉
-              </Typography>
-              <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
-                Event Created Successfully!
-              </Typography>
-              <Typography variant="body1" color="text.secondary" mb={3}>
-                Redirecting to your events...
-              </Typography>
-              <CircularProgress size={30} sx={{ color: '#667eea' }} />
+      <>
+        <SharedHeader currentPage="/edit-event" userInfo={userInfo} />
+        <PageContainer>
+          <Container maxWidth="md">
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
+              <Alert severity="success" sx={{ borderRadius: '12px', fontSize: '1.1rem' }}>
+                ✅ Event updated successfully! Redirecting to event page...
+              </Alert>
             </Box>
-          </StyledPaper>
-        </Container>
-      </PageContainer>
+          </Container>
+        </PageContainer>
+      </>
     );
   }
 
   return (
     <>
-      <SharedHeader currentPage="/create-event" userInfo={userInfo} />
+      <SharedHeader currentPage="/edit-event" userInfo={userInfo} />
       <PageContainer>
         <Container maxWidth="md">
+          {/* Header */}
+          <Box mb={4} display="flex" alignItems="center" gap={2}>
+            <IconButton 
+              onClick={() => window.location.href = `/events/${eventId}`}
+              sx={{ 
+                color: 'white',
+                background: 'rgba(255,255,255,0.1)',
+                '&:hover': { background: 'rgba(255,255,255,0.2)' }
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography 
+              variant={isMobile ? "h4" : "h3"} 
+              component="h1" 
+              sx={{ 
+                color: 'white', 
+                fontWeight: 700,
+                fontSize: { xs: '1.75rem', sm: '2.5rem' }
+              }}
+            >
+              Edit Event
+            </Typography>
+          </Box>
+
           {/* Error Alert */}
           {error && (
             <Alert severity="error" sx={{ mb: 4, borderRadius: '12px' }}>
@@ -476,32 +430,19 @@ const CreateEventPage = ({ userId, userInfo }) => {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  {mapsLoaded ? (
-                    <GooglePlacesAutocomplete
-                      fullWidth
-                      label="Venue"
-                      value={formData.venue}
-                      onChange={handleChange('venue')}
-                      placeholder="Search for venues, restaurants, parks..."
-                      helperText="Start typing to search for places"
-                    />
-                  ) : (
-                    <TextField
-                      fullWidth
-                      label="Venue"
-                      value={formData.venue}
-                      onChange={handleChange('venue')}
-                      placeholder="e.g., Central Park, 123 Main St"
-                      InputProps={{
-                        startAdornment: <LocationIcon sx={{ color: '#667eea', mr: 1 }} />,
-                      }}
-                      helperText="Loading location search..."
-                    />
-                  )}
+                <Grid item xs={12}>
+                  <GooglePlacesAutocomplete
+                    ref={autocompleteRef}
+                    onPlaceSelect={handleVenueSelect}
+                    value={formData.venue}
+                    placeholder="Enter event location..."
+                    label="Venue"
+                    required
+                    fullWidth
+                  />
                 </Grid>
 
-                {/* Additional Settings - Collapsible Section Toggle */}
+                {/* Additional Settings */}
                 <Grid item xs={12}>
                     <Button 
                         fullWidth 
@@ -557,7 +498,7 @@ const CreateEventPage = ({ userId, userInfo }) => {
                   <Box display="flex" gap={2} justifyContent="flex-end" sx={{ mt: 3 }}>
                     <SecondaryButton
                       variant="outlined"
-                      onClick={() => window.location.href = '/events'}
+                      onClick={() => window.location.href = `/events/${eventId}`}
                       disabled={loading}
                     >
                       Cancel
@@ -568,7 +509,7 @@ const CreateEventPage = ({ userId, userInfo }) => {
                       disabled={loading}
                       startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
                     >
-                      {loading ? 'Creating...' : 'Create Event'}
+                      {loading ? 'Updating...' : 'Update Event'}
                     </PrimaryButton>
                   </Box>
                 </Grid>
@@ -581,4 +522,7 @@ const CreateEventPage = ({ userId, userInfo }) => {
   );
 };
 
-export default CreateEventPage; 
+// Make component available globally for the simple HTML page
+window.EditEventPage = EditEventPage;
+
+export default EditEventPage; 

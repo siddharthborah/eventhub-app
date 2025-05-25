@@ -201,10 +201,6 @@ const UserDashboard = ({ userData }) => {
         title = 'Delete Event?';
         message = `Are you sure you want to permanently delete the event "${selectedEvent.title}"? This action cannot be undone.`;
         action = 'delete';
-    } else if (actionType === 'cancel_event') {
-        title = 'Cancel Event?';
-        message = `Are you sure you want to cancel the event "${selectedEvent.title}"?`;
-        action = 'cancel';
     }
 
     setDialogContent({ title, message, eventId: selectedEvent.id, action });
@@ -222,29 +218,21 @@ const UserDashboard = ({ userData }) => {
     let endpoint = `/api/events/${dialogContent.eventId}`;
     let method = 'DELETE';
     let successMessage = 'Event deleted successfully.';
-    let body = null;
-
-    if (dialogContent.action === 'cancel') {
-        method = 'PUT';
-        body = JSON.stringify({ status: 'cancelled' });
-        successMessage = 'Event cancelled successfully.';
-    }
 
     try {
       const response = await fetch(endpoint, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: body,
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update event');
+        throw new Error(errorData.error || 'Failed to delete event');
       }
       setSnackbar({ open: true, message: successMessage, severity: 'success' });
       fetchMyEvents();
     } catch (error) {
-      console.error('Error performing action:', error);
+      console.error('Error deleting event:', error);
       setSnackbar({ open: true, message: `Error: ${error.message}`, severity: 'error' });
     } finally {
       handleDialogClose();
@@ -347,7 +335,6 @@ const UserDashboard = ({ userData }) => {
     saturday.setHours(23, 59, 59, 999);
 
     return events.filter(event => {
-      if (event.status !== 'published') return false;
       const eventDate = new Date(event.event_date);
       return eventDate >= sunday && eventDate <= saturday;
     }).length;
@@ -420,8 +407,6 @@ const UserDashboard = ({ userData }) => {
                     ) : myEvents.length > 0 ? (
                       <Grid container spacing={2}>
                         {myEvents.map((event) => {
-                          const statusStyle = getStatusStyle(event.status);
-                          const showStatusChip = event.status === 'published' || event.status === 'cancelled';
                           return (
                           <Grid item xs={12} sm={6} md={4} key={event.id}>
                             <EventCard onClick={(e) => handleCardClick(event.id, e)} sx={{cursor: 'pointer'}}>
@@ -443,19 +428,6 @@ const UserDashboard = ({ userData }) => {
                                     {event.title}
                                   </Typography>
                                   <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                                    {showStatusChip && (
-                                      <Chip
-                                        label={statusStyle.label}
-                                        size="small"
-                                        sx={{
-                                          backgroundColor: statusStyle.backgroundColor,
-                                          color: statusStyle.color,
-                                          fontWeight: 600,
-                                          fontSize: '0.75rem',
-                                          mr: 0.5,
-                                        }}
-                                      />
-                                    )}
                                     <IconButton 
                                       aria-label="settings" 
                                       onClick={(e) => handleMenuOpen(e, event)}
@@ -664,21 +636,12 @@ const UserDashboard = ({ userData }) => {
           </ListItemIcon>
           Edit Event
         </MenuItem>
-        {selectedEvent?.status === 'published' ? (
-          <MenuItem onClick={(e) => openConfirmationDialog(e, 'cancel_event')} sx={{ color: 'warning.dark' }}>
-            <ListItemIcon>
-              <CancelIcon fontSize="small" sx={{ color: 'warning.dark' }} />
-            </ListItemIcon>
-            Cancel Event
-          </MenuItem>
-        ) : selectedEvent?.status === 'cancelled' || selectedEvent?.status === 'draft' ? (
-           <MenuItem onClick={(e) => openConfirmationDialog(e, 'delete_event')} sx={{ color: 'error.main' }}>
-            <ListItemIcon>
-              <DeleteIcon fontSize="small" sx={{ color: 'error.main' }} />
-            </ListItemIcon>
-            {selectedEvent?.status === 'draft' ? 'Delete Draft' : 'Delete Event'}
-          </MenuItem>
-        ) : null}
+        <MenuItem onClick={(e) => openConfirmationDialog(e, 'delete_event')} sx={{ color: 'error.main' }}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" sx={{ color: 'error.main' }} />
+          </ListItemIcon>
+          Delete Event
+        </MenuItem>
       </Menu>
 
       <Dialog
@@ -697,8 +660,8 @@ const UserDashboard = ({ userData }) => {
           <Button onClick={handleDialogClose} color="primary">
             Back
           </Button>
-          <Button onClick={handleDialogConfirm} color={dialogContent.action === 'delete' ? "error" : (dialogContent.action === 'cancel' ? "warning" : "primary")} autoFocus>
-            Confirm {dialogContent.action === 'delete' ? "Deletion" : (dialogContent.action === 'cancel' ? "Cancellation" : "Publish")}
+          <Button onClick={handleDialogConfirm} color={dialogContent.action === 'delete' ? "error" : "primary"} autoFocus>
+            Confirm {dialogContent.action === 'delete' ? "Deletion" : "Publish"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -13,7 +13,7 @@ import (
 // the user has already been authenticated previously.
 func IsAuthenticated(ctx *gin.Context) {
 	if sessions.Default(ctx).Get("profile") == nil {
-		ctx.Redirect(http.StatusSeeOther, "/")
+		ctx.Redirect(http.StatusSeeOther, "/login")
 	} else {
 		ctx.Next()
 	}

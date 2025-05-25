@@ -15,6 +15,7 @@ import (
 	"01-Login/platform/middleware"
 	"01-Login/web/app/callback"
 	createevent "01-Login/web/app/create-event"
+	editevent "01-Login/web/app/edit-event"
 	"01-Login/web/app/events"
 	"01-Login/web/app/home"
 	"01-Login/web/app/login"
@@ -37,11 +38,15 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 		sessionSecret = "your-secret-key-change-in-production"
 	}
 
+	// Determine if we're using HTTPS (production or ngrok)
+	// For ngrok, we want secure cookies since it's HTTPS
+	isSecure := os.Getenv("SESSION_SECRET") != "" || os.Getenv("AUTH0_CALLBACK_URL") != ""
+
 	store := cookie.NewStore([]byte(sessionSecret))
 	store.Options(sessions.Options{
 		Path:     "/",
 		MaxAge:   int(24 * time.Hour.Seconds()),
-		Secure:   true,
+		Secure:   isSecure, // Use secure cookies for HTTPS (production or ngrok)
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
@@ -60,6 +65,7 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 	router.GET("/user", middleware.IsAuthenticated, user.Handler)
 	router.GET("/events", middleware.IsAuthenticated, events.Handler)
 	router.GET("/create-event", middleware.IsAuthenticated, createevent.Handler)
+	router.GET("/edit-event/:id", middleware.IsAuthenticated, editevent.Handler)
 	router.GET("/events/:id", events.DetailHandler)
 	router.GET("/logout", logout.Handler)
 
