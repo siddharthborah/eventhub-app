@@ -81,10 +81,59 @@ const LandingPage = () => {
               fontWeight: 700,
               color: 'white',
               fontSize: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
             }}
           >
-            EventHub
+            🎪 EventHub
           </Typography>
+          
+          {/* Header Login/Signup Buttons */}
+          {!isMobile && (
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant="outlined"
+                href="/login"
+                sx={{
+                  color: 'white',
+                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1,
+                  borderRadius: '12px',
+                  '&:hover': {
+                    borderColor: 'white',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    transform: 'translateY(-1px)',
+                  },
+                }}
+              >
+                Login
+              </Button>
+              <Button
+                variant="contained"
+                href="/signup"
+                sx={{
+                  backgroundColor: 'white',
+                  color: '#667eea',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1,
+                  borderRadius: '12px',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                  },
+                }}
+              >
+                Sign Up
+              </Button>
+            </Box>
+          )}
         </Box>
 
         {/* Main Content */}
@@ -123,7 +172,7 @@ const LandingPage = () => {
               }}
             >
               Plan, organize, and share memorable events with friends and family. 
-              From birthdays to corporate gatherings, make every occasion special.
+              Create beautiful event pages, send invitations, and track RSVPs - all in one place.
             </Typography>
 
             <Box
@@ -140,14 +189,14 @@ const LandingPage = () => {
                 size="large"
                 href="/login"
               >
-                Get Started
+                Login
               </PrimaryButton>
               <SecondaryButton
                 variant="outlined"
                 size="large"
                 href="/signup"
               >
-                Learn More
+                Sign Up
               </SecondaryButton>
             </Box>
 
@@ -182,13 +231,13 @@ const LandingPage = () => {
                   variant="h4"
                   sx={{ fontSize: '2rem', mb: 1 }}
                 >
-                  🌐
+                  ✅
                 </Typography>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
-                  Share Easily
+                  RSVP Tracking
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Send invites and share event details with anyone
+                  Send invites and track who's coming with Yes/No/Maybe responses
                 </Typography>
               </Box>
               <Box>

@@ -506,6 +506,190 @@
             color: #721c24;
         }
         
+        .rsvp-section {
+            margin: 40px 0;
+            padding: 0;
+            border: none;
+            background: none;
+        }
+        
+        .rsvp-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            padding: 24px 0;
+        }
+        
+        .rsvp-label {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+        
+        .rsvp-buttons {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .rsvp-btn {
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+            min-width: 100px;
+        }
+        
+        .rsvp-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .rsvp-btn:hover::before {
+            left: 100%;
+        }
+        
+        .rsvp-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .rsvp-btn:active {
+            transform: translateY(0);
+        }
+        
+        .rsvp-btn .material-icons {
+            font-size: 20px;
+        }
+        
+        .rsvp-btn.yes {
+            color: #059669;
+            border-color: #059669;
+        }
+        
+        .rsvp-btn.yes:hover,
+        .rsvp-btn.yes.selected {
+            background: #059669;
+            color: white;
+            border-color: #059669;
+            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3);
+        }
+        
+        .rsvp-btn.no {
+            color: #dc2626;
+            border-color: #dc2626;
+        }
+        
+        .rsvp-btn.no:hover,
+        .rsvp-btn.no.selected {
+            background: #dc2626;
+            color: white;
+            border-color: #dc2626;
+            box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
+        }
+        
+        .rsvp-btn.maybe {
+            color: #d97706;
+            border-color: #d97706;
+        }
+        
+        .rsvp-btn.maybe:hover,
+        .rsvp-btn.maybe.selected {
+            background: #d97706;
+            color: white;
+            border-color: #d97706;
+            box-shadow: 0 8px 20px rgba(217, 119, 6, 0.3);
+        }
+        
+        .rsvp-status {
+            margin-top: 16px;
+            padding: 12px 20px;
+            border-radius: 16px;
+            font-weight: 600;
+            display: none;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        
+        .rsvp-status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .rsvp-status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        
+        .rsvp-counts {
+            margin-top: 32px;
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 20px 0;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .count-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: white;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .count-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+        
+        .count-item .count {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        
+        .count-item.yes .count {
+            color: #059669;
+        }
+        
+        .count-item.no .count {
+            color: #dc2626;
+        }
+        
+        .count-item.maybe .count {
+            color: #d97706;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -671,6 +855,49 @@
                 </div>
                 {{ end }}
                 
+                <!-- RSVP Section (only for authenticated non-organizers) -->
+                {{ if and .isAuthenticated (not .isOwner) }}
+                <div class="rsvp-section">
+                    <div class="rsvp-container">
+                        <span class="rsvp-label">RSVP:</span>
+                        <div class="rsvp-buttons">
+                            <button class="rsvp-btn yes" onclick="submitRSVP('yes')">
+                                <span class="material-icons">check_circle</span>
+                                Yes
+                            </button>
+                            <button class="rsvp-btn no" onclick="submitRSVP('no')">
+                                <span class="material-icons">cancel</span>
+                                No
+                            </button>
+                            <button class="rsvp-btn maybe" onclick="submitRSVP('maybe')">
+                                <span class="material-icons">help</span>
+                                Maybe
+                            </button>
+                        </div>
+                    </div>
+                    <div id="rsvpStatus" class="rsvp-status"></div>
+                </div>
+                {{ end }}
+                
+                <!-- RSVP Counts (visible to all) -->
+                <div class="rsvp-counts" id="rsvpCounts" style="display: none;">
+                    <div class="count-item yes">
+                        <span class="material-icons">check_circle</span>
+                        <span class="count" id="yesCount">0</span>
+                        <span>Going</span>
+                    </div>
+                    <div class="count-item maybe">
+                        <span class="material-icons">help</span>
+                        <span class="count" id="maybeCount">0</span>
+                        <span>Maybe</span>
+                    </div>
+                    <div class="count-item no">
+                        <span class="material-icons">cancel</span>
+                        <span class="count" id="noCount">0</span>
+                        <span>Not Going</span>
+                    </div>
+                </div>
+                
                 <div class="actions">
                     <button class="btn btn-primary" onclick="openShareModal()">
                         <span class="material-icons">share</span>
@@ -729,7 +956,131 @@
                 hour: '2-digit',
                 minute: '2-digit'
             });
+            
+            // Load RSVP data if user is authenticated
+            {{if .isAuthenticated}}
+                loadRSVPData();
+            {{end}}
+            
+            // Load RSVP counts for everyone
+            loadRSVPCounts();
         });
+        
+        // Load user's existing RSVP
+        function loadRSVPData() {
+            fetch('/api/events/{{.event.ID}}/rsvp', {
+                method: 'GET',
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.rsvp) {
+                    // Highlight the selected response
+                    const selectedBtn = document.querySelector(`.rsvp-btn.${data.rsvp.response}`);
+                    if (selectedBtn) {
+                        selectedBtn.classList.add('selected');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading RSVP:', error);
+            });
+        }
+        
+        // Load RSVP counts
+        function loadRSVPCounts() {
+            {{if .isOwner}}
+            fetch('/api/events/{{.event.ID}}/rsvps', {
+                method: 'GET',
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.counts) {
+                    updateRSVPCounts(data.counts);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading RSVP counts:', error);
+            });
+            {{end}}
+        }
+        
+        // Update RSVP count display
+        function updateRSVPCounts(counts) {
+            const countsSection = document.getElementById('rsvpCounts');
+            const yesCount = document.getElementById('yesCount');
+            const noCount = document.getElementById('noCount');
+            const maybeCount = document.getElementById('maybeCount');
+            
+            if (counts.yes || counts.no || counts.maybe) {
+                yesCount.textContent = counts.yes || 0;
+                noCount.textContent = counts.no || 0;
+                maybeCount.textContent = counts.maybe || 0;
+                countsSection.style.display = 'flex';
+            }
+        }
+        
+        // Submit RSVP
+        function submitRSVP(response) {
+            const statusDiv = document.getElementById('rsvpStatus');
+            const buttons = document.querySelectorAll('.rsvp-btn');
+            
+            // Show loading state
+            buttons.forEach(btn => btn.disabled = true);
+            showRSVPStatus('Submitting...', 'success');
+            
+            fetch('/api/events/{{.event.ID}}/rsvp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ response: response })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Update UI
+                buttons.forEach(btn => {
+                    btn.classList.remove('selected');
+                    btn.disabled = false;
+                });
+                
+                const selectedBtn = document.querySelector(`.rsvp-btn.${response}`);
+                if (selectedBtn) {
+                    selectedBtn.classList.add('selected');
+                }
+                
+                showRSVPStatus(`✓ Your response has been saved: ${response.charAt(0).toUpperCase() + response.slice(1)}`, 'success');
+                
+                // Reload counts if organizer
+                {{if .isOwner}}
+                loadRSVPCounts();
+                {{end}}
+            })
+            .catch(error => {
+                console.error('Error submitting RSVP:', error);
+                buttons.forEach(btn => btn.disabled = false);
+                showRSVPStatus(`Error: ${error.message}`, 'error');
+            });
+        }
+        
+        // Show RSVP status message
+        function showRSVPStatus(message, type) {
+            const statusDiv = document.getElementById('rsvpStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `rsvp-status ${type}`;
+            statusDiv.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
         
         // User menu toggle
         function toggleUserMenu() {

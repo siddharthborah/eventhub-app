@@ -10,7 +10,7 @@ import (
 // User represents a user in the system
 type User struct {
 	ID        uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	Email     string    `json:"email" gorm:"uniqueIndex;not null"`
+	Email     string    `json:"email" gorm:"uniqueIndex:idx_users_email,where:email != ''"`
 	Name      string    `json:"name" gorm:"not null"`
 	Picture   string    `json:"picture"`
 	AuthID    string    `json:"auth_id" gorm:"uniqueIndex"` // Auth0 user ID

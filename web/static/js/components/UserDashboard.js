@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -12,6 +12,8 @@ import {
   IconButton,
   useTheme,
   useMediaQuery,
+  Chip,
+  CircularProgress,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -19,6 +21,10 @@ import {
   Settings as SettingsIcon,
   ExitToApp as LogoutIcon,
   Event as EventIcon,
+  LocationOn as LocationOnIcon,
+  Schedule as ScheduleIcon,
+  CheckCircle as CheckCircleIcon,
+  Mail as MailIcon,
 } from '@mui/icons-material';
 import SharedHeader from './SharedHeader';
 
@@ -85,9 +91,85 @@ const StatsCard = styled(Card)(({ theme }) => ({
   },
 }));
 
+const EventCard = styled(Card)(({ theme }) => ({
+  borderRadius: '16px',
+  transition: 'all 0.3s ease',
+  cursor: 'pointer',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+  },
+}));
+
 const UserDashboard = ({ userData }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [rsvpEvents, setRsvpEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRSVPEvents();
+  }, []);
+
+  const fetchRSVPEvents = async () => {
+    try {
+      const response = await fetch('/api/user/rsvps', {
+        credentials: 'same-origin'
+      });
+      const data = await response.json();
+      if (data.rsvps) {
+        setRsvpEvents(data.rsvps);
+      }
+    } catch (error) {
+      console.error('Error fetching RSVP events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatEventDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getRSVPResponseStyle = (response) => {
+    switch (response) {
+      case 'yes':
+        return {
+          color: '#059669',
+          backgroundColor: 'rgba(5, 150, 105, 0.1)',
+          icon: <CheckCircleIcon sx={{ fontSize: 16 }} />,
+          label: 'Going'
+        };
+      case 'no':
+        return {
+          color: '#dc2626',
+          backgroundColor: 'rgba(220, 38, 38, 0.1)',
+          icon: <span className="material-icons" style={{ fontSize: 16 }}>cancel</span>,
+          label: 'Not Going'
+        };
+      case 'maybe':
+        return {
+          color: '#d97706',
+          backgroundColor: 'rgba(217, 119, 6, 0.1)',
+          icon: <span className="material-icons" style={{ fontSize: 16 }}>help</span>,
+          label: 'Maybe'
+        };
+      default:
+        return {
+          color: '#6b7280',
+          backgroundColor: 'rgba(107, 114, 128, 0.1)',
+          icon: <span className="material-icons" style={{ fontSize: 16 }}>question_mark</span>,
+          label: 'Unknown'
+        };
+    }
+  };
 
   return (
     <>
@@ -149,86 +231,113 @@ const UserDashboard = ({ userData }) => {
                     <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
                       Welcome Back, {userData.nickname}! 👋
                     </Typography>
-                    <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                    <Typography variant="body1" color="text.secondary">
                       Ready to create amazing events? Here's your dashboard overview.
                     </Typography>
-                    <PrimaryButton
-                      variant="contained"
-                      href="/create-event"
-                      startIcon={<EventIcon />}
-                    >
-                      Create New Event
-                    </PrimaryButton>
                   </StyledPaper>
                 </Grid>
 
-                {/* Stats Cards */}
-                <Grid item xs={12} sm={6}>
-                  <StatsCard>
-                    <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                      <Typography variant="h2" sx={{ fontSize: '3rem', mb: 1 }}>
-                        🎉
-                      </Typography>
-                      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
-                        Events
-                      </Typography>
-                      <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                        Create and manage your events
-                      </Typography>
-                    </CardContent>
-                  </StatsCard>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <StatsCard>
-                    <CardContent sx={{ textAlign: 'center', py: 4 }}>
-                      <Typography variant="h2" sx={{ fontSize: '3rem', mb: 1 }}>
-                        🌐
-                      </Typography>
-                      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
-                        Share
-                      </Typography>
-                      <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                        Share events with friends
-                      </Typography>
-                    </CardContent>
-                  </StatsCard>
-                </Grid>
-
-                {/* Quick Actions */}
+                {/* RSVP'd Events Section */}
                 <Grid item xs={12}>
                   <StyledPaper>
                     <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#2d3748', mb: 3 }}>
-                      Quick Actions
+                      <MailIcon sx={{ mr: 1, color: '#667eea' }} />
+                      Invited To
                     </Typography>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={4}>
-                        <SecondaryButton
-                          fullWidth
-                          href="/create-event"
-                          startIcon={<EventIcon />}
-                        >
-                          Create Event
-                        </SecondaryButton>
+                    
+                    {loading ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                        <CircularProgress />
+                      </Box>
+                    ) : rsvpEvents.length > 0 ? (
+                      <Grid container spacing={2}>
+                        {rsvpEvents.map((rsvp) => {
+                          const responseStyle = getRSVPResponseStyle(rsvp.response);
+                          return (
+                          <Grid item xs={12} sm={6} md={4} key={rsvp.id}>
+                            <EventCard onClick={() => window.location.href = `/events/${rsvp.event.id}`}>
+                              <CardContent sx={{ pb: 2 }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                  <Typography 
+                                    variant="h6" 
+                                    sx={{ 
+                                      fontWeight: 600, 
+                                      color: '#2d3748', 
+                                      mb: 0,
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                      pr: 1,
+                                      flex: 1
+                                    }}
+                                    title={rsvp.event.title}
+                                  >
+                                    {rsvp.event.title}
+                                  </Typography>
+                                  <Chip
+                                    icon={responseStyle.icon}
+                                    label={responseStyle.label}
+                                    size="small"
+                                    sx={{
+                                      backgroundColor: responseStyle.backgroundColor,
+                                      color: responseStyle.color,
+                                      fontWeight: 600,
+                                      fontSize: '0.75rem',
+                                      flexShrink: 0
+                                    }}
+                                  />
+                                </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                  <ScheduleIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
+                                  <Typography 
+                                    variant="body2" 
+                                    color="text.secondary"
+                                    sx={{
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap'
+                                    }}
+                                  >
+                                    {formatEventDate(rsvp.event.event_date)}
+                                  </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                  <LocationOnIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
+                                  <Typography 
+                                    variant="body2" 
+                                    color="text.secondary"
+                                    title={rsvp.event.venue}
+                                  >
+                                    {rsvp.event.venue}
+                                  </Typography>
+                                </Box>
+                                <Chip 
+                                  label={rsvp.event.event_type} 
+                                  size="small" 
+                                  sx={{ 
+                                    backgroundColor: '#667eea', 
+                                    color: 'white',
+                                    textTransform: 'capitalize'
+                                  }} 
+                                />
+                              </CardContent>
+                            </EventCard>
+                          </Grid>
+                        )})}
                       </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <SecondaryButton
-                          fullWidth
-                          href="/events"
-                          startIcon={<EventIcon />}
-                        >
-                          View Events
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                        <Typography variant="h6" color="text.secondary" gutterBottom>
+                          📬 No invitations yet!
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          You haven't RSVP'd to any events yet
+                        </Typography>
+                        <SecondaryButton href="/events">
+                          Browse Events
                         </SecondaryButton>
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <SecondaryButton
-                          fullWidth
-                          href="/events"
-                          startIcon={<EventIcon />}
-                        >
-                          Browse Public
-                        </SecondaryButton>
-                      </Grid>
-                    </Grid>
+                      </Box>
+                    )}
                   </StyledPaper>
                 </Grid>
               </Grid>

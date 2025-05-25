@@ -3,7 +3,6 @@ package callback
 import (
 	"log"
 	"net/http"
-	"net/url"
 
 	"01-Login/platform/services"
 
@@ -18,13 +17,8 @@ func Handler(auth *authenticator.Authenticator) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		session := sessions.Default(ctx)
 
-		// Get and decode the state parameter
-		stateParam, err := url.QueryUnescape(ctx.Query("state"))
-		if err != nil {
-			log.Printf("State parameter encoding error: %v", err)
-			ctx.String(http.StatusBadRequest, "Invalid state parameter encoding.")
-			return
-		}
+		// Get the state parameter (Gin already URL-decodes query parameters)
+		stateParam := ctx.Query("state")
 
 		// Get stored state from session
 		storedState := session.Get("state")
@@ -68,9 +62,49 @@ func Handler(auth *authenticator.Authenticator) gin.HandlerFunc {
 		// Create or update user in database
 		userService := services.NewUserService()
 		authID := profile["sub"].(string)
-		email := profile["email"].(string)
-		name := profile["name"].(string)
-		picture, _ := profile["picture"].(string)
+
+		// Safely extract profile fields with fallbacks
+		email := ""
+		if emailVal, ok := profile["email"]; ok && emailVal != nil {
+			if emailStr, ok := emailVal.(string); ok {
+				email = emailStr
+			}
+		}
+
+		name := ""
+		if nameVal, ok := profile["name"]; ok && nameVal != nil {
+			if nameStr, ok := nameVal.(string); ok {
+				name = nameStr
+			}
+		}
+
+		// Use nickname as fallback for name
+		if name == "" {
+			if nicknameVal, ok := profile["nickname"]; ok && nicknameVal != nil {
+				if nicknameStr, ok := nicknameVal.(string); ok {
+					name = nicknameStr
+				}
+			}
+		}
+
+		// Use email as fallback for name if still empty
+		if name == "" && email != "" {
+			name = email
+		}
+
+		picture := ""
+		if pictureVal, ok := profile["picture"]; ok && pictureVal != nil {
+			if pictureStr, ok := pictureVal.(string); ok {
+				picture = pictureStr
+			}
+		}
+
+		// Ensure we have at least authID
+		if authID == "" {
+			log.Printf("No auth ID found in profile")
+			ctx.String(http.StatusInternalServerError, "Invalid user profile.")
+			return
+		}
 
 		user, err := userService.CreateOrUpdateUserFromAuth(authID, email, name, picture)
 		if err != nil {

@@ -59,6 +59,7 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 	// Initialize controllers
 	userController := controllers.NewUserController()
 	eventController := controllers.NewEventController()
+	rsvpController := controllers.NewRSVPController()
 
 	// API routes
 	api := router.Group("/api")
@@ -87,7 +88,15 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 			events.GET("/:id", eventController.GetEvent)
 			events.PUT("/:id", eventController.UpdateEvent)
 			events.DELETE("/:id", eventController.DeleteEvent)
+
+			// RSVP routes for events
+			events.POST("/:id/rsvp", middleware.IsAuthenticatedAPI, rsvpController.SubmitRSVP)
+			events.GET("/:id/rsvp", middleware.IsAuthenticatedAPI, rsvpController.GetUserRSVP)
+			events.GET("/:id/rsvps", middleware.IsAuthenticatedAPI, rsvpController.GetEventRSVPs)
 		}
+
+		// User RSVP routes
+		api.GET("/user/rsvps", middleware.IsAuthenticatedAPI, rsvpController.GetUserRSVPs)
 	}
 
 	return router

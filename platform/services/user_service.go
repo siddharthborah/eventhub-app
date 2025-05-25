@@ -121,13 +121,23 @@ func (s *UserService) CreateOrUpdateUserFromAuth(authID, email, name, picture st
 	// Try to find existing user by auth ID
 	user, err := s.GetUserByAuthID(authID)
 	if err == nil {
-		// Update existing user
+		// Update existing user - only update email if it's not empty
 		updates := map[string]interface{}{
-			"email":   email,
 			"name":    name,
 			"picture": picture,
 		}
+
+		// Only update email if it's not empty
+		if email != "" {
+			updates["email"] = email
+		}
+
 		return s.UpdateUser(user.ID, updates)
+	}
+
+	// For new users, we need at least a name or email
+	if email == "" && name == "" {
+		return nil, errors.New("cannot create user without email or name")
 	}
 
 	// Create new user

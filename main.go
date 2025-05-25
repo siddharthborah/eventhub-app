@@ -24,6 +24,7 @@ func main() {
 	database.Migrate(
 		&models.User{},
 		&models.Event{},
+		&models.RSVP{},
 	)
 
 	auth, err := authenticator.New()
