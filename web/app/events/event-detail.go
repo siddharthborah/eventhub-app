@@ -1,71 +1,41 @@
 package events
 
 import (
+	"encoding/json"
+	"html/template"
+	"log"
 	"net/http"
-
-	"01-Login/platform/services"
+	"os"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
-// DetailHandler for the event detail page.
+// DetailHandler for the event detail page - serves template like other pages
 func DetailHandler(ctx *gin.Context) {
-	eventIDStr := ctx.Param("id")
-
-	// Parse UUID
-	eventID, err := uuid.Parse(eventIDStr)
-	if err != nil {
-		ctx.HTML(http.StatusBadRequest, "event-not-found.html", gin.H{
-			"error": "Invalid event ID",
-		})
-		return
-	}
-
-	// Get event from database
-	eventService := services.NewEventService()
-	event, err := eventService.GetEventByID(eventID)
-	if err != nil {
-		ctx.HTML(http.StatusNotFound, "event-not-found.html", gin.H{
-			"error": "Event not found",
-		})
-		return
-	}
-
-	// Check if user is authenticated
+	eventID := ctx.Param("id")
 	session := sessions.Default(ctx)
 	profile := session.Get("profile")
 
-	var isAuthenticated bool
-	var userID string
-	var isOwner bool
-	var userInfo map[string]interface{}
-
+	var jsUserData template.JS
 	if profile != nil {
-		isAuthenticated = true
-		profileMap := profile.(map[string]interface{})
-		authID := profileMap["sub"].(string)
-		userInfo = profileMap
-
-		// Get user from database using Auth ID
-		userService := services.NewUserService()
-		user, err := userService.GetUserByAuthID(authID)
+		profileBytes, err := json.Marshal(profile)
 		if err == nil {
-			userID = user.ID.String()
-			isOwner = user.ID.String() == event.UserID.String()
+			jsUserData = template.JS(string(profileBytes))
+		} else {
+			log.Printf("Error marshalling profile to JSON: %v", err)
+			jsUserData = template.JS("null")
 		}
+	} else {
+		jsUserData = template.JS("null")
 	}
 
-	// Create template data
-	templateData := map[string]interface{}{
-		"event":           event,
-		"isAuthenticated": isAuthenticated,
-		"userID":          userID,
-		"isOwner":         isOwner,
-		"userInfo":        userInfo,
-		"currentPage":     "/events/" + eventIDStr,
-		"shareURL":        ctx.Request.Host + "/events/" + eventIDStr,
+	googleMapsAPIKey := os.Getenv("GOOGLE_MAPS_API_KEY")
+
+	templateData := gin.H{
+		"eventId":          eventID,
+		"userData":         jsUserData,
+		"googleMapsAPIKey": googleMapsAPIKey,
 	}
 
 	ctx.HTML(http.StatusOK, "event-detail.html", templateData)

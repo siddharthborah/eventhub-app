@@ -18,6 +18,8 @@ import {
   IconButton,
   useTheme,
   useMediaQuery,
+  Collapse,
+  Divider,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -25,6 +27,8 @@ import {
   Event as EventIcon,
   Save as SaveIcon,
   LocationOn as LocationIcon,
+  ExpandMore as ExpandMoreIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import SharedHeader from './SharedHeader';
 
@@ -72,16 +76,6 @@ const SecondaryButton = styled(ActionButton)(({ theme }) => ({
   },
 }));
 
-const PageHeader = styled(Box)(({ theme }) => ({
-  background: 'rgba(255, 255, 255, 0.95)',
-  borderRadius: '16px',
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
-  boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-  backdropFilter: 'blur(10px)',
-  textAlign: 'center',
-}));
-
 // Google Places Autocomplete Component
 const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
   const inputRef = useRef(null);
@@ -90,100 +84,121 @@ const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!window.google || !inputRef.current) return;
-
-    try {
-      // Initialize Google Places Autocomplete
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(
-        inputRef.current,
-        {
-          types: ['establishment', 'geocode'],
-          fields: ['name', 'formatted_address', 'geometry', 'place_id', 'types', 'business_status'],
-        }
-      );
-
-      // Handle place selection
-      const handlePlaceSelect = () => {
-        const place = autocompleteRef.current.getPlace();
-        
-        if (place && (place.formatted_address || place.name)) {
-          const venueData = {
-            name: place.name || '',
-            address: place.formatted_address || place.name,
-            placeId: place.place_id || '',
-            coordinates: place.geometry ? {
-              lat: place.geometry.location.lat(),
-              lng: place.geometry.location.lng(),
-            } : null,
-            businessStatus: place.business_status || 'OPERATIONAL',
-            types: place.types || [],
-          };
-          
-          const displayValue = place.formatted_address || place.name;
-          setInputValue(displayValue);
-          onChange(venueData);
-          setIsLoading(false);
-        }
-      };
-
-      autocompleteRef.current.addListener('place_changed', handlePlaceSelect);
-
-      return () => {
-        if (autocompleteRef.current) {
-          window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
-        }
-      };
-    } catch (error) {
-      console.error('Error initializing Google Places Autocomplete:', error);
-      setIsLoading(false);
+    if (!window.google || !window.google.maps || !window.google.maps.places || !inputRef.current) {
+      // Google Maps API not loaded yet, or ref not available
+      return;
     }
-  }, [onChange]);
 
-  // Update input value when prop changes
+    // Initialize Google Places Autocomplete
+    autocompleteRef.current = new window.google.maps.places.Autocomplete(
+      inputRef.current,
+      {
+        types: ['establishment', 'geocode'], // Common types for venues
+        fields: ['name', 'formatted_address', 'geometry', 'place_id', 'types', 'business_status'],
+        // componentRestrictions: { country: "us" }, // Optional: restrict to a country
+      }
+    );
+
+    // Event listener for when a place is selected
+    const placeChangedListener = autocompleteRef.current.addListener('place_changed', () => {
+      setIsLoading(true);
+      const place = autocompleteRef.current.getPlace();
+
+      if (place && (place.formatted_address || place.name)) {
+        const venueData = {
+          name: place.name || '',
+          address: place.formatted_address || place.name,
+          placeId: place.place_id || '',
+          coordinates: place.geometry && place.geometry.location ? {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          } : null,
+          businessStatus: place.business_status || 'OPERATIONAL',
+          types: place.types || [],
+        };
+        
+        const displayValue = place.formatted_address || place.name || '';
+        setInputValue(displayValue); // Update our local state for the input field
+        if (typeof onChange === 'function') {
+          onChange(venueData); // Pass the rich venue object to the parent
+        }
+      } else {
+        // If place is not valid, or no details, pass current input text
+        if (typeof onChange === 'function') {
+          onChange(inputRef.current.value);
+        }
+      }
+      setIsLoading(false);
+    });
+
+    return () => {
+      // Clean up listeners when the component unmounts
+      if (autocompleteRef.current) {
+        window.google.maps.event.removeListener(placeChangedListener);
+        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        // The following line can cause issues if Google's dropdown is still present
+        // const pacContainers = document.querySelectorAll('.pac-container');
+        // pacContainers.forEach(container => container.remove());
+      }
+    };
+  }, [onChange]); // Rerun effect if onChange prop changes
+
+  // Effect to update inputValue if the external 'value' prop changes
+  // This is important if the parent form resets or loads initial data
   useEffect(() => {
     if (value !== inputValue) {
       setInputValue(value || '');
     }
   }, [value]);
 
-  const handleInputChange = (e) => {
-    const newValue = e.target.value;
+  const handleInputChange = (event) => {
+    const newValue = event.target.value;
     setInputValue(newValue);
+    setIsLoading(newValue.length > 0); // Show loader while typing
     
-    // Set loading state when user starts typing
-    if (newValue.length > 2) {
-      setIsLoading(true);
-    } else {
-      setIsLoading(false);
-    }
-    
-    // If user is typing manually, pass the string value
+    // If user is typing manually, we should still call onChange
+    // but with the raw string, not a venue object.
+    // The parent component's handleChange for 'venue' already handles this.
     if (typeof onChange === 'function') {
       onChange(newValue);
     }
   };
-
-  const handleKeyDown = (e) => {
-    // Clear loading state on Enter or Escape
-    if (e.key === 'Enter' || e.key === 'Escape') {
-      setIsLoading(false);
+  
+  const handleInputKeyDown = (event) => {
+    if (event.key === 'Enter') {
+        // Prevent form submission if user hits Enter in autocomplete input
+        // Google's widget handles Enter to select the highlighted item
+        const pacItemSelected = document.querySelector('.pac-item-selected');
+        if(!pacItemSelected) { // if no item is selected, prevent form submission
+            event.preventDefault();
+        }
+    }
+    if (event.key === 'Escape') {
+        setIsLoading(false);
     }
   };
 
+
   return (
     <TextField
-      {...props}
-      inputRef={inputRef}
-      value={inputValue}
+      {...props} // Spread other props like label, fullWidth, etc.
+      inputRef={inputRef} // Assign the ref to the underlying input element
+      value={inputValue} // Controlled component
       onChange={handleInputChange}
-      onKeyDown={handleKeyDown}
+      onKeyDown={handleInputKeyDown} // Handle Enter/Escape
       InputProps={{
-        startAdornment: <LocationIcon sx={{ color: '#667eea', mr: 1 }} />,
+        ...props.InputProps, // Merge existing InputProps if any
+        startAdornment: (
+          <LocationIcon sx={{ color: '#667eea', mr: 1 }} />
+        ),
         endAdornment: isLoading ? (
           <CircularProgress size={20} sx={{ color: '#667eea' }} />
         ) : null,
-        ...props.InputProps,
       }}
+      // Ensure browser's native autocomplete doesn't interfere
+      autoComplete="off" 
+      // Add a unique name to help differentiate from other autocompletes if necessary
+      name="google-places-autocomplete-venue"
     />
   );
 };
@@ -192,9 +207,23 @@ const CreateEventPage = ({ userId, userInfo }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Format current date for datetime-local input
+  // Format default date for datetime-local input
+  // Default to 1 week from now, at the next full hour
   const now = new Date();
-  const defaultDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const futureDate = new Date(now.getTime());
+
+  // Set date to 1 week from now
+  futureDate.setDate(now.getDate() + 7);
+
+  // Set time to the next full hour from the current time
+  futureDate.setHours(now.getHours() + 1); // Move to the next hour block
+  futureDate.setMinutes(0);                // Set minutes to 00
+  futureDate.setSeconds(0);                // Set seconds to 00
+  futureDate.setMilliseconds(0);           // Set milliseconds to 00
+
+  // Adjust for timezone to get local time in ISO format YYYY-MM-DDTHH:mm for the input
+  const localFutureDateTime = new Date(futureDate.getTime() - (futureDate.getTimezoneOffset() * 60000));
+  const defaultDateTime = localFutureDateTime.toISOString().slice(0, 16);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -206,13 +235,14 @@ const CreateEventPage = ({ userId, userInfo }) => {
     event_type: 'birthday',
     is_public: true,
     max_attendees: 0,
-    status: 'draft',
+    status: 'published', // Default to published
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [mapsLoaded, setMapsLoaded] = useState(false);
+  const [showAdditionalSettings, setShowAdditionalSettings] = useState(false);
 
   // Load Google Maps API
   useEffect(() => {
@@ -359,16 +389,6 @@ const CreateEventPage = ({ userId, userInfo }) => {
       <SharedHeader currentPage="/create-event" userInfo={userInfo} />
       <PageContainer>
         <Container maxWidth="md">
-          {/* Page Header */}
-          <PageHeader>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: '#2d3748', mb: 1 }}>
-              Create New Event 🎉
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Fill in the details for your amazing event
-            </Typography>
-          </PageHeader>
-
           {/* Error Alert */}
           {error && (
             <Alert severity="error" sx={{ mb: 4, borderRadius: '12px' }}>
@@ -427,20 +447,6 @@ const CreateEventPage = ({ userId, userInfo }) => {
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                      value={formData.status}
-                      onChange={handleChange('status')}
-                      label="Status"
-                    >
-                      <MenuItem value="draft">📝 Draft</MenuItem>
-                      <MenuItem value="published">✅ Published</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-
                 {/* Date and Location */}
                 <Grid item xs={12}>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mt: 2 }}>
@@ -487,49 +493,55 @@ const CreateEventPage = ({ userId, userInfo }) => {
                   )}
                 </Grid>
 
-                {/* Additional Settings */}
+                {/* Additional Settings - Collapsible Section Toggle */}
                 <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mt: 2 }}>
-                    Additional Settings
-                  </Typography>
+                    <Button 
+                        fullWidth 
+                        onClick={() => setShowAdditionalSettings(!showAdditionalSettings)}
+                        sx={{
+                            justifyContent: 'space-between',
+                            py: 1.5,
+                            textTransform: 'none',
+                            color: 'text.primary',
+                            "&:hover": {
+                                background: 'rgba(0,0,0,0.04)'
+                            }
+                        }}
+                        endIcon={showAdditionalSettings ? <ExpandMoreIcon /> : <ChevronRightIcon />}
+                    >
+                        <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                            Additional Settings
+                        </Typography>
+                    </Button>
+                    <Divider sx={{ mt:1, mb: showAdditionalSettings ? 2 : 0 }}/>
                 </Grid>
-
+                
+                {/* Collapsed Content: Max Attendees */}
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Max Attendees"
-                    type="number"
-                    value={formData.max_attendees}
-                    onChange={handleChange('max_attendees')}
-                    placeholder="0 for unlimited"
-                    inputProps={{ min: 0 }}
-                  />
+                  <Collapse in={showAdditionalSettings} timeout="auto" unmountOnExit sx={{ width: '100%'}}>
+                    <TextField
+                      fullWidth
+                      label="Max Attendees"
+                      type="number"
+                      value={formData.max_attendees}
+                      onChange={handleChange('max_attendees')}
+                      placeholder="0 for unlimited"
+                      inputProps={{ min: 0 }}
+                    />
+                  </Collapse>
                 </Grid>
 
+                {/* Collapsed Content: Event Image URL */}
                 <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Event Image URL"
-                    value={formData.image}
-                    onChange={handleChange('image')}
-                    placeholder="https://example.com/image.jpg"
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.is_public}
-                        onChange={handleChange('is_public')}
-                        color="primary"
-                      />
-                    }
-                    label="Make this event public"
-                  />
-                  <Typography variant="body2" color="text.secondary" sx={{ ml: 4 }}>
-                    Public events can be discovered by other users
-                  </Typography>
+                  <Collapse in={showAdditionalSettings} timeout="auto" unmountOnExit sx={{ width: '100%'}}>
+                    <TextField
+                      fullWidth
+                      label="Event Image URL"
+                      value={formData.image}
+                      onChange={handleChange('image')}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </Collapse>
                 </Grid>
 
                 {/* Submit Button */}

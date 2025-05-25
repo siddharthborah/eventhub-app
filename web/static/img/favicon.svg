@@ -1,0 +1,9 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+    <!-- Simple icon centered and scaled for favicon -->
+    <circle cx="16" cy="16" r="10" fill="none" stroke="#667eea" stroke-width="2.5"/>
+    <circle cx="16" cy="16" r="4" fill="#764ba2"/>
+    <circle cx="10" cy="10" r="2" fill="#667eea"/>
+    <circle cx="22" cy="10" r="2" fill="#667eea"/>
+    <circle cx="10" cy="22" r="2" fill="#667eea"/>
+    <circle cx="22" cy="22" r="2" fill="#667eea"/>
+</svg> 

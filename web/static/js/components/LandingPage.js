@@ -6,9 +6,11 @@ import {
   Button, 
   useTheme, 
   useMediaQuery,
-  Paper
+  Paper,
+  Link
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import EventHubLogo from './EventHubLogo';
 
 const HeroSection = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
@@ -26,32 +28,20 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
 }));
 
-const ActionButton = styled(Button)(({ theme }) => ({
-  padding: '12px 32px',
-  borderRadius: '12px',
-  fontWeight: 600,
-  fontSize: '1rem',
+const GetStartedButton = styled(Button)(({ theme }) => ({
+  padding: '16px 48px',
+  borderRadius: '16px',
+  fontWeight: 700,
+  fontSize: '1.1rem',
   textTransform: 'none',
   transition: 'all 0.3s ease',
-}));
-
-const PrimaryButton = styled(ActionButton)(({ theme }) => ({
   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
   color: 'white',
+  boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
   '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
-  },
-}));
-
-const SecondaryButton = styled(ActionButton)(({ theme }) => ({
-  background: 'white',
-  color: '#667eea',
-  border: '2px solid #667eea',
-  '&:hover': {
-    background: '#667eea',
-    color: 'white',
-    transform: 'translateY(-2px)',
+    transform: 'translateY(-3px)',
+    boxShadow: '0 12px 35px rgba(102, 126, 234, 0.4)',
+    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
   },
 }));
 
@@ -75,64 +65,30 @@ const LandingPage = () => {
             alignItems: 'center',
           }}
         >
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 700,
-              color: 'white',
-              fontSize: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            🎪 EventHub
-          </Typography>
+          <EventHubLogo 
+            variant="white" 
+            height={32} 
+            width={112}
+          />
           
-          {/* Header Login/Signup Buttons */}
+          {/* Header Login Link for existing users */}
           {!isMobile && (
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                variant="outlined"
-                href="/login"
-                sx={{
+            <Link
+              href="/login"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.9)',
+                textDecoration: 'none',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                transition: 'all 0.3s ease',
+                '&:hover': {
                   color: 'white',
-                  borderColor: 'rgba(255, 255, 255, 0.5)',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  px: 3,
-                  py: 1,
-                  borderRadius: '12px',
-                  '&:hover': {
-                    borderColor: 'white',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    transform: 'translateY(-1px)',
-                  },
-                }}
-              >
-                Login
-              </Button>
-              <Button
-                variant="contained"
-                href="/signup"
-                sx={{
-                  backgroundColor: 'white',
-                  color: '#667eea',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  px: 3,
-                  py: 1,
-                  borderRadius: '12px',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    transform: 'translateY(-1px)',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-                  },
-                }}
-              >
-                Sign Up
-              </Button>
-            </Box>
+                  textDecoration: 'underline',
+                },
+              }}
+            >
+              Already have an account? Sign in
+            </Link>
           )}
         </Box>
 
@@ -178,26 +134,35 @@ const LandingPage = () => {
             <Box
               sx={{
                 display: 'flex',
-                gap: 3,
-                justifyContent: 'center',
-                flexDirection: isMobile ? 'column' : 'row',
+                flexDirection: 'column',
                 alignItems: 'center',
+                gap: 3,
               }}
             >
-              <PrimaryButton
+              <GetStartedButton
                 variant="contained"
-                size="large"
-                href="/login"
-              >
-                Login
-              </PrimaryButton>
-              <SecondaryButton
-                variant="outlined"
                 size="large"
                 href="/signup"
               >
-                Sign Up
-              </SecondaryButton>
+                Get Started Free
+              </GetStartedButton>
+              
+              <Link
+                href="/login"
+                sx={{
+                  color: '#667eea',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.95rem',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    textDecoration: 'underline',
+                    color: '#5a6fd8',
+                  },
+                }}
+              >
+                Already have an account? Sign in
+              </Link>
             </Box>
 
             {/* Feature highlights */}

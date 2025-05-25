@@ -97,6 +97,7 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 
 		// User RSVP routes
 		api.GET("/user/rsvps", middleware.IsAuthenticatedAPI, rsvpController.GetUserRSVPs)
+		api.GET("/user/events", middleware.IsAuthenticatedAPI, eventController.GetCurrentUserEvents)
 	}
 
 	return router

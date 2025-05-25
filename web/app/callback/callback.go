@@ -115,6 +115,9 @@ func Handler(auth *authenticator.Authenticator) gin.HandlerFunc {
 
 		log.Printf("User created/updated in database: %s (ID: %s)", user.Email, user.ID.String())
 
+		// Add the database user_id to the profile
+		profile["user_id"] = user.ID.String()
+
 		session.Set("access_token", token.AccessToken)
 		session.Set("profile", profile)
 		if err := session.Save(); err != nil {

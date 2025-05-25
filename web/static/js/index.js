@@ -6,6 +6,7 @@ import LandingPage from './components/LandingPage';
 import UserDashboard from './components/UserDashboard';
 import MyEventsPage from './components/MyEventsPage';
 import CreateEventPage from './components/CreateEventPage';
+import EventDetailPage from './components/EventDetailPage';
 
 const theme = createTheme({
   palette: {
@@ -52,6 +53,7 @@ const root = createRoot(container);
 const pageType = window.pageType;
 const userData = window.userData;
 const userId = window.userId;
+const eventId = window.eventId;
 
 // Determine which component to render
 let ComponentToRender;
@@ -59,6 +61,8 @@ if (pageType === 'events') {
   ComponentToRender = <MyEventsPage userId={userId} userInfo={userData} />;
 } else if (pageType === 'create-event') {
   ComponentToRender = <CreateEventPage userId={userId} userInfo={userData} />;
+} else if (pageType === 'event-detail') {
+  ComponentToRender = <EventDetailPage eventId={eventId} userInfo={userData} />;
 } else if (userData) {
   ComponentToRender = <UserDashboard userData={userData} />;
 } else {

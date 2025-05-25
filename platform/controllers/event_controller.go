@@ -370,3 +370,44 @@ func (ec *EventController) GetUserEvents(c *gin.Context) {
 		},
 	})
 }
+
+// GetCurrentUserEvents handles GET /api/user/events - gets events for the authenticated user
+func (ec *EventController) GetCurrentUserEvents(c *gin.Context) {
+	// Get user from context (set by auth middleware)
+	userInterface, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+	user := userInterface.(models.User)
+
+	// Parse pagination parameters
+	pageStr := c.DefaultQuery("page", "1")
+	pageSizeStr := c.DefaultQuery("page_size", "50") // Higher default for dashboard
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	pageSize, err := strconv.Atoi(pageSizeStr)
+	if err != nil || pageSize < 1 || pageSize > 100 {
+		pageSize = 50
+	}
+
+	events, total, err := ec.eventService.GetEventsByUser(user.ID, page, pageSize)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"events": events,
+		"pagination": gin.H{
+			"page":        page,
+			"page_size":   pageSize,
+			"total":       total,
+			"total_pages": (total + int64(pageSize) - 1) / int64(pageSize),
+		},
+	})
+}

@@ -10,6 +10,7 @@ import {
   Avatar,
   useTheme,
   useMediaQuery,
+  ListItemIcon,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -19,7 +20,10 @@ import {
   Add as AddIcon,
   AccountCircle as AccountIcon,
   ExitToApp as LogoutIcon,
+  CalendarToday as CalendarIcon,
+  People as PeopleIcon,
 } from '@mui/icons-material';
+import EventHubLogo from './EventHubLogo';
 
 const HeaderContainer = styled(Box)(({ theme }) => ({
   position: 'fixed',
@@ -91,6 +95,11 @@ const SharedHeader = ({ currentPage, userInfo }) => {
   };
 
   const handleNavigation = (path) => {
+    if (path === '#') {
+      // Placeholder links - do nothing for now
+      setMobileMenuAnchor(null);
+      return;
+    }
     window.location.href = path;
     setMobileMenuAnchor(null);
   };
@@ -120,9 +129,9 @@ const SharedHeader = ({ currentPage, userInfo }) => {
   };
 
   const navigationItems = [
-    { label: 'Dashboard', path: '/user', icon: <DashboardIcon /> },
-    { label: 'My Events', path: '/events', icon: <EventIcon /> },
-    { label: 'Create Event', path: '/create-event', icon: <AddIcon />, primary: true },
+    { label: 'Events', path: '#', icon: <EventIcon /> },
+    { label: 'Calendar', path: '#', icon: <CalendarIcon /> },
+    { label: 'Community', path: '#', icon: <PeopleIcon /> },
   ];
 
   return (
@@ -130,18 +139,14 @@ const SharedHeader = ({ currentPage, userInfo }) => {
       <HeaderContent maxWidth="lg">
         {/* Logo */}
         <Logo onClick={handleLogoClick}>
-          <Typography 
-            variant="h5" 
-            sx={{ 
-              fontWeight: 700, 
-              color: '#667eea',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5
+          <EventHubLogo 
+            height={32} 
+            width={112} 
+            onClick={handleLogoClick}
+            sx={{
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
             }}
-          >
-            🎪 EventHub
-          </Typography>
+          />
         </Logo>
 
         {/* Desktop Navigation */}
@@ -151,7 +156,7 @@ const SharedHeader = ({ currentPage, userInfo }) => {
               item.primary ? (
                 <PrimaryNavButton
                   key={item.path}
-                  startIcon={item.icon}
+                  {...(item.icon && { startIcon: item.icon })}
                   onClick={() => handleNavigation(item.path)}
                 >
                   {item.label}
@@ -159,7 +164,7 @@ const SharedHeader = ({ currentPage, userInfo }) => {
               ) : (
                 <NavButton
                   key={item.path}
-                  startIcon={item.icon}
+                  {...(item.icon && { startIcon: item.icon })}
                   onClick={() => handleNavigation(item.path)}
                   sx={{
                     backgroundColor: currentPage === item.path ? 'rgba(102, 126, 234, 0.1)' : 'transparent',
@@ -177,17 +182,25 @@ const SharedHeader = ({ currentPage, userInfo }) => {
         <Box display="flex" alignItems="center" gap={1}>
           {/* User Profile */}
           <IconButton onClick={handleProfileMenuOpen} size="small">
-            <Avatar 
-              sx={{ 
-                width: 36, 
-                height: 36,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-              }}
-            >
-              {userInfo?.name ? userInfo.name.charAt(0).toUpperCase() : 'U'}
-            </Avatar>
+            {userInfo?.picture ? (
+              <Avatar 
+                src={userInfo.picture} 
+                alt={userInfo.name || 'User'} 
+                sx={{ width: 36, height: 36 }}
+              />
+            ) : (
+              <Avatar 
+                sx={{ 
+                  width: 36, 
+                  height: 36,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                }}
+              >
+                {userInfo?.name ? userInfo.name.charAt(0).toUpperCase() : (userInfo?.nickname ? userInfo.nickname.charAt(0).toUpperCase() : 'U')}
+              </Avatar>
+            )}
           </IconButton>
 
           {/* Mobile Menu Button */}
@@ -225,7 +238,7 @@ const SharedHeader = ({ currentPage, userInfo }) => {
               }}
             >
               <Box display="flex" alignItems="center" gap={1}>
-                {item.icon}
+                {item.icon && item.icon}
                 {item.label}
               </Box>
             </MenuItem>
@@ -238,33 +251,60 @@ const SharedHeader = ({ currentPage, userInfo }) => {
           open={Boolean(profileMenuAnchor)}
           onClose={handleProfileMenuClose}
           PaperProps={{
+            elevation: 3,
             sx: {
+              overflow: 'visible',
+              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
               borderRadius: '12px',
-              mt: 1,
+              mt: 1.5,
+              minWidth: 180,
+              '& .MuiAvatar-root': {
+                width: 32,
+                height: 32,
+                ml: -0.5,
+                mr: 1,
+              },
               '& .MuiMenuItem-root': {
                 borderRadius: '8px',
-                margin: '2px 8px',
-                fontWeight: 600,
+                margin: '4px 8px',
+                padding: '8px 16px',
+                fontWeight: 500,
+                '&:hover': {
+                  backgroundColor: 'rgba(102, 126, 234, 0.08)',
+                }
+              },
+              '&:before': {
+                content: '""',
+                display: 'block',
+                position: 'absolute',
+                top: 0,
+                right: 14,
+                width: 10,
+                height: 10,
+                bgcolor: 'background.paper',
+                transform: 'translateY(-50%) rotate(45deg)',
+                zIndex: 0,
               },
             },
           }}
+          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-          <MenuItem disabled>
-            <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                {userInfo?.name || 'User'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {userInfo?.email || 'user@example.com'}
-              </Typography>
-            </Box>
-          </MenuItem>
-          <MenuItem onClick={handleProfileMenuClose}>
-            <AccountIcon sx={{ mr: 1 }} />
-            Profile Settings
-          </MenuItem>
-          <MenuItem onClick={handleLogout}>
-            <LogoutIcon sx={{ mr: 1 }} />
+          {userInfo?.name && (
+            <MenuItem sx={{ fontWeight: 600, color: '#2d3748', '&:hover': { backgroundColor: 'transparent !important'} }} disabled>
+              {userInfo.name}
+            </MenuItem>
+          )}
+          {userInfo?.email && (
+             <MenuItem sx={{ fontSize: '0.875rem', color: 'text.secondary', mt: -0.5, mb: 0.5, '&:hover': { backgroundColor: 'transparent !important' } }} disabled>
+                {userInfo.email}
+            </MenuItem>
+          )}
+          {(userInfo?.name || userInfo?.email) && <Box sx={{ my: 0.5, mx: 1, borderTop: '1px solid #e0e0e0' }} />}
+          <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+            <ListItemIcon sx={{ color: 'error.main' }}>
+              <LogoutIcon fontSize="small" />
+            </ListItemIcon>
             Logout
           </MenuItem>
         </Menu>
@@ -272,5 +312,8 @@ const SharedHeader = ({ currentPage, userInfo }) => {
     </HeaderContainer>
   );
 };
+
+// Make component available globally
+window.SharedHeader = SharedHeader;
 
 export default SharedHeader; 

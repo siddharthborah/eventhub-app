@@ -1,0 +1,14 @@
+<svg width="140" height="40" viewBox="0 0 140 40" xmlns="http://www.w3.org/2000/svg">
+    <!-- Simple icon -->
+    <circle cx="20" cy="20" r="8" fill="none" stroke="white" stroke-width="2"/>
+    <circle cx="20" cy="20" r="3" fill="white"/>
+    <circle cx="15" cy="15" r="1.5" fill="rgba(255,255,255,0.8)"/>
+    <circle cx="25" cy="15" r="1.5" fill="rgba(255,255,255,0.8)"/>
+    <circle cx="15" cy="25" r="1.5" fill="rgba(255,255,255,0.8)"/>
+    <circle cx="25" cy="25" r="1.5" fill="rgba(255,255,255,0.8)"/>
+    
+    <!-- Text -->
+    <text x="38" y="26" font-family="Inter, sans-serif" font-size="18" font-weight="700" fill="white">
+        EventHub
+    </text>
+</svg> 
