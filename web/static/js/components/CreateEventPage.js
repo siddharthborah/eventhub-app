@@ -336,6 +336,16 @@ const CreateEventPage = ({ userId, userInfo }) => {
         max_attendees: parseInt(formData.max_attendees) || 0,
       };
 
+      // Add enhanced venue data if available from Google Places
+      if (formData.venueData && typeof formData.venueData === 'object') {
+        eventData.venue_name = formData.venueData.name || '';
+        eventData.venue_place_id = formData.venueData.placeId || '';
+        if (formData.venueData.coordinates) {
+          eventData.venue_lat = formData.venueData.coordinates.lat || 0;
+          eventData.venue_lng = formData.venueData.coordinates.lng || 0;
+        }
+      }
+
       const response = await fetch('/api/events', {
         method: 'POST',
         headers: {

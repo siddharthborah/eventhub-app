@@ -9,10 +9,15 @@ import (
 
 // Event represents an event in the system (birthday, anniversary, house party, etc.)
 type Event struct {
-	ID           uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	Title        string    `json:"title" gorm:"not null"`
-	Description  string    `json:"description"`
-	Venue        string    `json:"venue"`
+	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	Title       string    `json:"title" gorm:"not null"`
+	Description string    `json:"description"`
+	Venue       string    `json:"venue"`
+	// Enhanced venue fields for Google Places integration
+	VenueName    string    `json:"venue_name"`     // Business name from Google Places
+	VenuePlaceID string    `json:"venue_place_id"` // Google Place ID for unique identification
+	VenueLat     float64   `json:"venue_lat"`      // Latitude for mapping
+	VenueLng     float64   `json:"venue_lng"`      // Longitude for mapping
 	EventDate    time.Time `json:"event_date" gorm:"not null"`
 	Image        string    `json:"image"`
 	EventType    string    `json:"event_type"` // birthday, anniversary, house_party, wedding, etc.
