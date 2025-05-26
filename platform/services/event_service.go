@@ -86,7 +86,7 @@ func (s *EventService) GetEventsByUser(userID uuid.UUID, page, pageSize int) ([]
 
 	// Get paginated results
 	offset := (page - 1) * pageSize
-	if err := s.db.Where("user_id = ?", userID).Order("event_date ASC").Offset(offset).Limit(pageSize).Find(&events).Error; err != nil {
+	if err := s.db.Preload("User").Where("user_id = ?", userID).Order("event_date ASC").Offset(offset).Limit(pageSize).Find(&events).Error; err != nil {
 		return nil, 0, err
 	}
 

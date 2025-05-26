@@ -177,7 +177,19 @@ const SharedHeader = ({ currentPage, userInfo }) => {
       } : {}}
     >
       <HeaderContent maxWidth="lg">
-        {/* Avatar on the left */}
+        {/* Logo on the left */}
+        <Logo onClick={handleLogoClick}>
+          <EventHubLogo 
+            height={32} 
+            width={112} 
+            onClick={handleLogoClick}
+            sx={{
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+            }}
+          />
+        </Logo>
+        <Box sx={{ flexGrow: 1 }} />
+        {/* Avatar on the right */}
         <Box display="flex" alignItems="center" gap={1}>
           <IconButton onClick={handleProfileMenuOpen} size="small">
             {userInfo?.picture ? (
@@ -201,37 +213,6 @@ const SharedHeader = ({ currentPage, userInfo }) => {
             )}
           </IconButton>
         </Box>
-        {/* Centered logo */}
-        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
-          <Logo onClick={handleLogoClick}>
-            <EventHubLogo 
-              height={32} 
-              width={112} 
-              onClick={handleLogoClick}
-              sx={{
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
-              }}
-            />
-          </Logo>
-        </Box>
-        {/* Dropdown on the right */}
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <Select
-            id="view-mode-select"
-            value={viewMode}
-            onChange={e => setViewMode(e.target.value)}
-          >
-            <MenuItem value="upcoming">Upcoming</MenuItem>
-            <MenuItem value="hosting">Hosting</MenuItem>
-            <MenuItem value="attending">Attending</MenuItem>
-          </Select>
-        </FormControl>
-        {/* Desktop Navigation */}
-        {false && !isMobile && (
-          <Box display="flex" alignItems="center" gap={2}>
-            {/* Navigation links removed */}
-          </Box>
-        )}
         {/* Combined Profile & Navigation Menu */}
         <Menu
           anchorEl={profileMenuAnchor}

@@ -29,6 +29,9 @@ import {
   FormControl,
   InputLabel,
   Fab,
+  ToggleButton,
+  ToggleButtonGroup,
+  Divider,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -45,6 +48,8 @@ import {
   MoreVert as MoreVertIcon,
   Delete as DeleteIcon,
   Cancel as CancelIcon,
+  Person as PersonIcon,
+  Share as ShareIcon,
 } from '@mui/icons-material';
 import SharedHeader from './SharedHeader';
 
@@ -60,13 +65,6 @@ const eventTypeImages = {
   social: '/static/img/event-types/social.jpg',
   other: '/static/img/event-types/other.jpg', // A default fallback
 };
-
-const DashboardContainer = styled(Box)(({ theme }) => ({
-  minHeight: '100vh',
-  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  paddingTop: theme.spacing(7),
-  paddingBottom: theme.spacing(4),
-}));
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -142,6 +140,15 @@ const HeaderContent = styled(Container)(({ theme }) => ({
   [theme.breakpoints.down('sm')]: {
     padding: theme.spacing(0.5, 2),
   },
+}));
+
+const DashboardContainer = styled(Box)(({ theme }) => ({
+  background: 'rgba(255,255,255,0.95)',
+  borderRadius: 24,
+  boxShadow: '0 8px 32px rgba(0,0,0,0.10)',
+  padding: theme.spacing(4, 3),
+  maxWidth: 900,
+  margin: '40px auto',
 }));
 
 const UserDashboard = ({ userData }) => {
@@ -391,377 +398,407 @@ const UserDashboard = ({ userData }) => {
     ...upcomingInvited.map(rsvp => ({ ...rsvp.event, _type: 'attendee', rsvpResponse: rsvp.response })),
   ].sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
 
-  return (
-    <>
-      <SharedHeader currentPage="/user" userInfo={userData} />
-      <DashboardContainer>
-        <Container maxWidth="lg">
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={12}>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  {(() => {
-                    const eventsThisWeekCount = countEventsThisWeek(myEvents);
-                    if (eventsThisWeekCount > 0) {
-                      return (
-                        <Typography variant="body1" color="text.secondary">
-                          You have {eventsThisWeekCount} event{eventsThisWeekCount > 1 ? 's' : ''} this week.
-                        </Typography>
-                      );
-                    } else {
-                      return null;
-                    }
-                  })()}
-                </Grid>
+  // Share handler
+  const handleShare = (event, eventId) => {
+    event.stopPropagation();
+    const url = `${window.location.protocol}//${window.location.host}/events/${eventId}`;
+    navigator.clipboard.writeText(url);
+    setSnackbar({ open: true, message: 'Link copied to clipboard!', severity: 'success' });
+  };
 
-                <Grid item xs={12}>
-                  <StyledPaper>
-                    {viewMode === 'hosting' ? (
-                      myEventsLoading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                          <CircularProgress />
-                        </Box>
-                      ) : myEvents.length > 0 ? (
-                        <Grid container spacing={2}>
-                          {myEvents.map((event) => {
-                            let imageUrlToDisplay = event.image;
-                            if (!imageUrlToDisplay && event.event_type) {
-                              imageUrlToDisplay = eventTypeImages[event.event_type] || eventTypeImages.other;
-                            }
-                            return (
-                              <Grid item xs={12} sm={6} md={4} key={event.id}>
-                                <EventCard onClick={(e) => handleCardClick(event.id, e)} sx={{cursor: 'pointer'}}>
-                                  {imageUrlToDisplay && (
-                                    <CardMedia
-                                      component="img"
-                                      height="140"
-                                      image={imageUrlToDisplay}
-                                      alt={event.title}
-                                      onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = eventTypeImages.other;
-                                      }}
-                                    />
-                                  )}
-                                  <CardContent sx={{ pb: 2 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                      <Typography 
-                                        variant="h6" 
-                                        sx={{ 
-                                          fontWeight: 600, 
-                                          color: '#2d3748',
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap',
-                                          flexGrow: 1,
-                                          mr: 1,
-                                        }}
-                                        title={event.title}
-                                      >
-                                        {event.title}
-                                      </Typography>
-                                      <Box sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                                        <IconButton 
-                                          aria-label="settings" 
-                                          onClick={(e) => handleMenuOpen(e, event)}
-                                          size="small"
-                                          sx={{ p:0.5 }}
-                                        >
-                                          <MoreVertIcon fontSize="small" />
-                                        </IconButton>
-                                      </Box>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                      <ScheduleIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
-                                      <Typography 
-                                        variant="body2" 
-                                        color="text.secondary"
-                                        sx={{
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap'
-                                        }}
-                                      >
-                                        {formatEventDate(event.event_date)}
-                                      </Typography>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                      <LocationOnIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
-                                      <Typography 
-                                        variant="body2" 
-                                        color="text.secondary"
-                                        title={event.venue}
-                                      >
-                                        {event.venue}
-                                      </Typography>
-                                    </Box>
-                                    <Chip 
-                                      label={`${getEventTypeIcon(event.event_type)} ${event.event_type.replace('_', ' ')}`}
-                                      size="small" 
-                                      sx={{ 
-                                        backgroundColor: '#667eea', 
-                                        color: 'white',
-                                        textTransform: 'capitalize'
-                                      }} 
-                                    />
-                                  </CardContent>
-                                </EventCard>
-                              </Grid>
-                            );
-                          })}
-                        </Grid>
-                      ) : (
-                        <Box sx={{ textAlign: 'center', py: 4 }}>
-                          <Typography variant="h6" color="text.secondary" gutterBottom>
-                            🎪 No events created yet!
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            Start by creating your first event
-                          </Typography>
-                          <PrimaryButton href="/create-event">
-                            <AddIcon />
-                          </PrimaryButton>
-                        </Box>
-                      )
-                    ) : viewMode === 'upcoming' ? (
-                      myEventsLoading || loading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                          <CircularProgress />
-                        </Box>
-                      ) : upcomingEvents.length > 0 ? (
-                        <Grid container spacing={2}>
-                          {upcomingEvents.map((event) => {
-                            let imageUrlToDisplay = event.image;
-                            if (!imageUrlToDisplay && event.event_type) {
-                              imageUrlToDisplay = eventTypeImages[event.event_type] || eventTypeImages.other;
-                            }
-                            return (
-                              <Grid item xs={12} sm={6} md={4} key={event.id + (event._type || '')}>
-                                <EventCard onClick={(e) => handleCardClick(event.id, e)} sx={{cursor: 'pointer'}}>
-                                  {imageUrlToDisplay && (
-                                    <CardMedia
-                                      component="img"
-                                      height="140"
-                                      image={imageUrlToDisplay}
-                                      alt={event.title}
-                                      onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = eventTypeImages.other;
-                                      }}
-                                    />
-                                  )}
-                                  <CardContent sx={{ pb: 2 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                      <Typography 
-                                        variant="h6" 
-                                        sx={{ 
-                                          fontWeight: 600, 
-                                          color: '#2d3748',
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap',
-                                          flexGrow: 1,
-                                          mr: 1,
-                                        }}
-                                        title={event.title}
-                                      >
-                                        {event.title}
-                                      </Typography>
-                                      {event._type === 'host' ? (
-                                        <Chip label="Hosting" size="small" sx={{ backgroundColor: '#667eea', color: 'white', ml: 1 }} />
-                                      ) : (
-                                        <Chip label="Attending" size="small" sx={{ backgroundColor: '#764ba2', color: 'white', ml: 1 }} />
-                                      )}
-                                    </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                      <ScheduleIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
-                                      <Typography 
-                                        variant="body2" 
-                                        color="text.secondary"
-                                        sx={{
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap'
-                                        }}
-                                      >
-                                        {formatEventDate(event.event_date)}
-                                      </Typography>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                      <LocationOnIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
-                                      <Typography 
-                                        variant="body2" 
-                                        color="text.secondary"
-                                        title={event.venue}
-                                      >
-                                        {event.venue}
-                                      </Typography>
-                                    </Box>
-                                    <Chip 
-                                      label={`${getEventTypeIcon(event.event_type)} ${event.event_type.replace('_', ' ')}`}
-                                      size="small" 
-                                      sx={{ 
-                                        backgroundColor: '#667eea', 
-                                        color: 'white',
-                                        textTransform: 'capitalize'
-                                      }} 
-                                    />
-                                  </CardContent>
-                                </EventCard>
-                              </Grid>
-                            );
-                          })}
-                        </Grid>
-                      ) : (
-                        <Box sx={{ textAlign: 'center', py: 4 }}>
-                          <Typography variant="h6" color="text.secondary" gutterBottom>
-                            No future events!
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            You have no future events scheduled.
-                          </Typography>
-                          <PrimaryButton href="/create-event">
-                            <AddIcon />
-                          </PrimaryButton>
-                        </Box>
-                      )
-                    ) : (
-                      loading ? (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                          <CircularProgress />
-                        </Box>
-                      ) : rsvpEvents.length > 0 ? (
-                        <Grid container spacing={2}>
-                          {rsvpEvents.map((rsvp) => {
-                            const responseStyle = getRSVPResponseStyle(rsvp.response);
-                            let imageUrlToDisplay = rsvp.event.image;
-                            if (!imageUrlToDisplay && rsvp.event.event_type) {
-                              imageUrlToDisplay = eventTypeImages[rsvp.event.event_type] || eventTypeImages.other;
-                            }
-                            return (
-                              <Grid item xs={12} sm={6} md={4} key={rsvp.id}>
-                                <EventCard onClick={() => window.location.href = `/events/${rsvp.event.id}`}>
-                                  {imageUrlToDisplay && (
-                                    <CardMedia
-                                      component="img"
-                                      height="140"
-                                      image={imageUrlToDisplay}
-                                      alt={rsvp.event.title}
-                                      onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = eventTypeImages.other;
-                                      }}
-                                    />
-                                  )}
-                                  <CardContent sx={{ pb: 2 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                                      <Typography 
-                                        variant="h6" 
-                                        sx={{ 
-                                          fontWeight: 600, 
-                                          color: '#2d3748', 
-                                          mb: 0,
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap',
-                                          pr: 1,
-                                          flex: 1
-                                        }}
-                                        title={rsvp.event.title}
-                                      >
-                                        {rsvp.event.title}
-                                      </Typography>
-                                      <Chip
-                                        icon={responseStyle.icon}
-                                        label={responseStyle.label}
-                                        size="small"
-                                        sx={{
-                                          backgroundColor: responseStyle.backgroundColor,
-                                          color: responseStyle.color,
-                                          fontWeight: 600,
-                                          fontSize: '0.75rem',
-                                          flexShrink: 0
-                                        }}
-                                      />
-                                    </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                      <ScheduleIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
-                                      <Typography 
-                                        variant="body2" 
-                                        color="text.secondary"
-                                        sx={{
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap'
-                                        }}
-                                      >
-                                        {formatEventDate(rsvp.event.event_date)}
-                                      </Typography>
-                                    </Box>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                      <LocationOnIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
-                                      <Typography 
-                                        variant="body2" 
-                                        color="text.secondary"
-                                        title={rsvp.event.venue}
-                                      >
-                                        {rsvp.event.venue}
-                                      </Typography>
-                                    </Box>
-                                    <Chip 
-                                      label={`${getEventTypeIcon(rsvp.event.event_type)} ${rsvp.event.event_type.replace('_', ' ')}`}
-                                      size="small" 
-                                      sx={{ 
-                                        backgroundColor: '#667eea', 
-                                        color: 'white',
-                                        textTransform: 'capitalize'
-                                      }} 
-                                    />
-                                  </CardContent>
-                                </EventCard>
-                              </Grid>
-                            );
-                          })}
-                        </Grid>
-                      ) : (
-                        <Box sx={{ textAlign: 'center', py: 4 }}>
-                          <Typography variant="h6" color="text.secondary" gutterBottom>
-                            📬 No invitations yet!
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            You haven't RSVP'd to any events yet
-                          </Typography>
-                        </Box>
-                      )
-                    )}
-                  </StyledPaper>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Container>
-        <Fab
-          href="/create-event"
-          aria-label="Create Event"
-          sx={{
-            position: 'fixed',
-            bottom: 32,
-            right: 32,
-            background: 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)',
-            color: 'white',
-            boxShadow: '0 6px 24px 0 rgba(255, 152, 0, 0.25), 0 1.5px 0 rgba(255, 152, 0, 0.08)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #ff9800 0%, #ffa726 100%)',
-              boxShadow: '0 12px 32px 0 rgba(255, 152, 0, 0.32)',
-              transform: 'scale(1.08)',
+  return (
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', pt: 8 }}>
+      <SharedHeader currentPage="/user" userInfo={userData} />
+      {/* Responsive layout: DashboardContainer on desktop, open layout on mobile */}
+      {isMobile ? (
+        <>
+          <FormControl size="small" sx={{
+            minWidth: 120,
+            px: 0,
+            py: 0,
+            mt: 2.5,
+            mb: 0.5,
+            ml: { xs: '10vw', sm: 'calc((100vw - 400px) / 2)' },
+            background: 'transparent',
+            boxShadow: 'none',
+            borderRadius: 0,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 999,
+              fontWeight: 600,
+              fontSize: '1rem',
+              background: 'rgba(255,255,255,0.95)',
+              boxShadow: '0 2px 12px rgba(102,126,234,0.10)',
+              px: 1.2,
+              py: 0.2,
             },
-            zIndex: 1201,
-          }}
-        >
-          <AddIcon sx={{ fontSize: 28 }} />
-        </Fab>
-      </DashboardContainer>
-      
+            '& .MuiSelect-select': {
+              py: 0.7,
+              px: 1.2,
+              borderRadius: 999,
+              display: 'flex',
+              alignItems: 'center',
+            },
+          }}>
+            <Select
+              id="view-mode-select"
+              value={viewMode}
+              onChange={e => setViewMode(e.target.value)}
+              displayEmpty
+              inputProps={{ 'aria-label': 'Select event view' }}
+            >
+              <MenuItem value="upcoming">Upcoming</MenuItem>
+              <MenuItem value="hosting">Hosting</MenuItem>
+              <MenuItem value="attending">Attending</MenuItem>
+            </Select>
+          </FormControl>
+          {/* Responsive event tiles: carousel on mobile */}
+          <Box
+            sx={{
+              display: 'flex',
+              overflowX: 'auto',
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch',
+              px: 0,
+              py: 2,
+              gap: 3,
+              maxWidth: '100vw',
+              minHeight: 420,
+              pl: { xs: '10vw', sm: 'calc((100vw - 400px) / 2)' },
+              pr: { xs: '10vw', sm: 'calc((100vw - 400px) / 2)' },
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': { display: 'none' },
+            }}
+          >
+            {(viewMode === 'upcoming' ? upcomingEvents : viewMode === 'hosting' ? myEvents : rsvpEvents.map(rsvp => rsvp.event)).map((event, idx) => {
+              let imageUrlToDisplay = event.image;
+              if (!imageUrlToDisplay && event.event_type) {
+                imageUrlToDisplay = eventTypeImages[event.event_type] || eventTypeImages.other;
+              }
+              return (
+                <Box
+                  key={event.id + (event._type || '')}
+                  sx={{
+                    flex: '0 0 80vw',
+                    maxWidth: 400,
+                    minWidth: 320,
+                    mx: 'auto',
+                    scrollSnapAlign: 'center',
+                    position: 'relative',
+                    transition: 'transform 0.3s',
+                  }}
+                >
+                  <EventCard
+                    sx={{ boxShadow: 6, cursor: 'pointer' }}
+                    onClick={() => window.location.href = `/events/${event.id}`}
+                  >
+                    {imageUrlToDisplay && (
+                      <CardMedia
+                        component="img"
+                        height="180"
+                        image={imageUrlToDisplay}
+                        alt={event.title}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = eventTypeImages.other;
+                        }}
+                        sx={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                      />
+                    )}
+                    <CardContent sx={{ pb: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography 
+                          variant="h6" 
+                          sx={{ 
+                            fontWeight: 600, 
+                            color: '#2d3748',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            flexGrow: 1,
+                            mr: 1,
+                          }}
+                          title={event.title}
+                        >
+                          {event.title}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          {event._type === 'host' ? (
+                            <Chip label="Hosting" size="small" sx={{ backgroundColor: '#667eea', color: 'white', ml: 1 }} />
+                          ) : event._type === 'attendee' ? (
+                            <Chip label="Attending" size="small" sx={{ backgroundColor: '#764ba2', color: 'white', ml: 1 }} />
+                          ) : null}
+                          <IconButton size="small" aria-label="share" onClick={e => handleShare(e, event.id)} sx={{ ml: 0.5 }}>
+                            <ShareIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.2 }}>
+                        <ScheduleIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {formatEventDate(event.event_date)}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.2 }}>
+                        <LocationOnIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          title={event.venue}
+                        >
+                          {event.venue}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.2 }}>
+                        <PersonIcon sx={{ color: '#667eea', fontSize: 18, mr: 1 }} />
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                          {event.user?.name || 'Organizer'}
+                        </Typography>
+                      </Box>
+                      <Chip 
+                        label={`${getEventTypeIcon(event.event_type)} ${event.event_type.replace('_', ' ')}`}
+                        size="small" 
+                        sx={{ 
+                          backgroundColor: '#667eea', 
+                          color: 'white',
+                          textTransform: 'capitalize',
+                          mt: 1.2
+                        }} 
+                      />
+                      {event._type === 'attendee' && (
+                        (() => {
+                          let bgColor = '#6b7280';
+                          let label = 'Unknown';
+                          if (event.rsvpResponse === 'yes') {
+                            bgColor = '#059669'; // green
+                            label = 'Going';
+                          } else if (event.rsvpResponse === 'no') {
+                            bgColor = '#dc2626'; // red
+                            label = 'Not Going';
+                          } else if (event.rsvpResponse === 'maybe') {
+                            bgColor = '#d97706'; // yellow
+                            label = 'Maybe';
+                          }
+                          return (
+                            <Chip
+                              label={label}
+                              size="small"
+                              sx={{
+                                backgroundColor: bgColor,
+                                color: 'white',
+                                borderRadius: 999,
+                                mt: 1.2,
+                                ml: 1,
+                                mb: 0,
+                                textTransform: 'capitalize',
+                              }}
+                            />
+                          );
+                        })()
+                      )}
+                    </CardContent>
+                  </EventCard>
+                </Box>
+              );
+            })}
+          </Box>
+        </>
+      ) : (
+        <DashboardContainer>
+          <FormControl size="small" sx={{
+            minWidth: 120,
+            px: 0,
+            py: 0,
+            mt: 0,
+            mb: 2,
+            background: 'transparent',
+            boxShadow: 'none',
+            borderRadius: 0,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 999,
+              fontWeight: 600,
+              fontSize: '1rem',
+              background: 'rgba(255,255,255,1)',
+              boxShadow: '0 2px 12px rgba(102,126,234,0.10)',
+              px: 1.2,
+              py: 0.2,
+            },
+            '& .MuiSelect-select': {
+              py: 0.7,
+              px: 1.2,
+              borderRadius: 999,
+              display: 'flex',
+              alignItems: 'center',
+            },
+          }}>
+            <Select
+              id="view-mode-select"
+              value={viewMode}
+              onChange={e => setViewMode(e.target.value)}
+              displayEmpty
+              inputProps={{ 'aria-label': 'Select event view' }}
+            >
+              <MenuItem value="upcoming">Upcoming</MenuItem>
+              <MenuItem value="hosting">Hosting</MenuItem>
+              <MenuItem value="attending">Attending</MenuItem>
+            </Select>
+          </FormControl>
+          <Grid container spacing={3}>
+            {(viewMode === 'upcoming' ? upcomingEvents : viewMode === 'hosting' ? myEvents : rsvpEvents.map(rsvp => rsvp.event)).map((event, idx) => {
+              let imageUrlToDisplay = event.image;
+              if (!imageUrlToDisplay && event.event_type) {
+                imageUrlToDisplay = eventTypeImages[event.event_type] || eventTypeImages.other;
+              }
+              return (
+                <Grid item xs={12} sm={6} md={4} key={event.id + (event._type || '')}>
+                  <EventCard sx={{ boxShadow: 6, cursor: 'pointer' }} onClick={() => window.location.href = `/events/${event.id}`}>
+                    {imageUrlToDisplay && (
+                      <CardMedia
+                        component="img"
+                        height="180"
+                        image={imageUrlToDisplay}
+                        alt={event.title}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = eventTypeImages.other;
+                        }}
+                        sx={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                      />
+                    )}
+                    <CardContent sx={{ pb: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography 
+                          variant="h6" 
+                          sx={{ 
+                            fontWeight: 600, 
+                            color: '#2d3748',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            flexGrow: 1,
+                            mr: 1,
+                          }}
+                          title={event.title}
+                        >
+                          {event.title}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          {event._type === 'host' ? (
+                            <Chip label="Hosting" size="small" sx={{ backgroundColor: '#667eea', color: 'white', ml: 1 }} />
+                          ) : event._type === 'attendee' ? (
+                            <Chip label="Attending" size="small" sx={{ backgroundColor: '#764ba2', color: 'white', ml: 1 }} />
+                          ) : null}
+                          <IconButton size="small" aria-label="share" onClick={e => handleShare(e, event.id)} sx={{ ml: 0.5 }}>
+                            <ShareIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.2 }}>
+                        <ScheduleIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {formatEventDate(event.event_date)}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.2 }}>
+                        <LocationOnIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          title={event.venue}
+                        >
+                          {event.venue}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.2 }}>
+                        <PersonIcon sx={{ color: '#667eea', fontSize: 18, mr: 1 }} />
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                          {event.user?.name || 'Organizer'}
+                        </Typography>
+                      </Box>
+                      <Chip 
+                        label={`${getEventTypeIcon(event.event_type)} ${event.event_type.replace('_', ' ')}`}
+                        size="small" 
+                        sx={{ 
+                          backgroundColor: '#667eea', 
+                          color: 'white',
+                          textTransform: 'capitalize',
+                          mt: 1.2
+                        }} 
+                      />
+                      {event._type === 'attendee' && (
+                        (() => {
+                          let bgColor = '#6b7280';
+                          let label = 'Unknown';
+                          if (event.rsvpResponse === 'yes') {
+                            bgColor = '#059669'; // green
+                            label = 'Going';
+                          } else if (event.rsvpResponse === 'no') {
+                            bgColor = '#dc2626'; // red
+                            label = 'Not Going';
+                          } else if (event.rsvpResponse === 'maybe') {
+                            bgColor = '#d97706'; // yellow
+                            label = 'Maybe';
+                          }
+                          return (
+                            <Chip
+                              label={label}
+                              size="small"
+                              sx={{
+                                backgroundColor: bgColor,
+                                color: 'white',
+                                borderRadius: 999,
+                                mt: 1.2,
+                                ml: 1,
+                                mb: 0,
+                                textTransform: 'capitalize',
+                              }}
+                            />
+                          );
+                        })()
+                      )}
+                    </CardContent>
+                  </EventCard>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </DashboardContainer>
+      )}
+      <Fab
+        href="/create-event"
+        aria-label="Create Event"
+        sx={{
+          position: 'fixed',
+          bottom: 32,
+          right: 32,
+          background: 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)',
+          color: 'white',
+          boxShadow: '0 6px 24px 0 rgba(255, 152, 0, 0.25), 0 1.5px 0 rgba(255, 152, 0, 0.08)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #ff9800 0%, #ffa726 100%)',
+            boxShadow: '0 12px 32px 0 rgba(255, 152, 0, 0.32)',
+            transform: 'scale(1.08)',
+          },
+          zIndex: 1201,
+        }}
+      >
+        <AddIcon sx={{ fontSize: 28 }} />
+      </Fab>
       <Menu
         anchorEl={anchorEl}
         open={openMenu}
@@ -841,7 +878,7 @@ const UserDashboard = ({ userData }) => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </>
+    </Box>
   );
 };
 
