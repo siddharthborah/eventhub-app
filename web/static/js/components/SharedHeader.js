@@ -11,6 +11,8 @@ import {
   useTheme,
   useMediaQuery,
   ListItemIcon,
+  FormControl,
+  Select,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -90,6 +92,7 @@ const SharedHeader = ({ currentPage, userInfo }) => {
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState(null);
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
   const [showHeader, setShowHeader] = useState(true);
+  const [viewMode, setViewMode] = useState('upcoming');
 
   useEffect(() => {
     if (!isMobile) return;
@@ -198,43 +201,35 @@ const SharedHeader = ({ currentPage, userInfo }) => {
             )}
           </IconButton>
         </Box>
-        {/* Logo on the right */}
-        <Logo onClick={handleLogoClick} sx={{ ml: 'auto' }}>
-          <EventHubLogo 
-            height={32} 
-            width={112} 
-            onClick={handleLogoClick}
-            sx={{
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
-            }}
-          />
-        </Logo>
+        {/* Centered logo */}
+        <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
+          <Logo onClick={handleLogoClick}>
+            <EventHubLogo 
+              height={32} 
+              width={112} 
+              onClick={handleLogoClick}
+              sx={{
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+              }}
+            />
+          </Logo>
+        </Box>
+        {/* Dropdown on the right */}
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <Select
+            id="view-mode-select"
+            value={viewMode}
+            onChange={e => setViewMode(e.target.value)}
+          >
+            <MenuItem value="upcoming">Upcoming</MenuItem>
+            <MenuItem value="hosting">Hosting</MenuItem>
+            <MenuItem value="attending">Attending</MenuItem>
+          </Select>
+        </FormControl>
         {/* Desktop Navigation */}
-        {!isMobile && (
+        {false && !isMobile && (
           <Box display="flex" alignItems="center" gap={2}>
-            {navigationItems.map((item) => (
-              item.primary ? (
-                <PrimaryNavButton
-                  key={item.path}
-                  {...(item.icon && { startIcon: item.icon })}
-                  onClick={() => handleNavigation(item.path)}
-                >
-                  {item.label}
-                </PrimaryNavButton>
-              ) : (
-                <NavButton
-                  key={item.path}
-                  {...(item.icon && { startIcon: item.icon })}
-                  onClick={() => handleNavigation(item.path)}
-                  sx={{
-                    backgroundColor: currentPage === item.path ? 'rgba(102, 126, 234, 0.1)' : 'transparent',
-                    color: currentPage === item.path ? '#667eea' : '#4a5568',
-                  }}
-                >
-                  {item.label}
-                </NavButton>
-              )
-            ))}
+            {/* Navigation links removed */}
           </Box>
         )}
         {/* Combined Profile & Navigation Menu */}

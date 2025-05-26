@@ -28,6 +28,7 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Fab,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -415,45 +416,6 @@ const UserDashboard = ({ userData }) => {
 
                 <Grid item xs={12}>
                   <StyledPaper>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, justifyContent: 'space-between', gap: 3 }}>
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
-                        <Select
-                          id="view-mode-select"
-                          value={viewMode}
-                          onChange={e => setViewMode(e.target.value)}
-                        >
-                          <MenuItem value="upcoming">Upcoming</MenuItem>
-                          <MenuItem value="hosting">Hosting</MenuItem>
-                          <MenuItem value="attending">Attending</MenuItem>
-                        </Select>
-                      </FormControl>
-                      <PrimaryButton
-                        href="/create-event"
-                        size="small"
-                        aria-label="Create Event"
-                        sx={{
-                          minWidth: 36,
-                          minHeight: 36,
-                          width: 40,
-                          height: 40,
-                          borderRadius: '50%',
-                          padding: 0,
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          boxShadow: '0 4px 16px rgba(102,126,234,0.15)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'transform 0.1s',
-                          '&:hover': {
-                            transform: 'scale(1.08)',
-                            boxShadow: '0 8px 32px rgba(102,126,234,0.18)',
-                            background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                          },
-                        }}
-                      >
-                        <AddIcon sx={{ fontSize: 22, color: 'white' }} />
-                      </PrimaryButton>
-                    </Box>
                     {viewMode === 'hosting' ? (
                       myEventsLoading ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -778,6 +740,26 @@ const UserDashboard = ({ userData }) => {
             </Grid>
           </Grid>
         </Container>
+        <Fab
+          href="/create-event"
+          aria-label="Create Event"
+          sx={{
+            position: 'fixed',
+            bottom: 32,
+            right: 32,
+            background: 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)',
+            color: 'white',
+            boxShadow: '0 6px 24px 0 rgba(255, 152, 0, 0.25), 0 1.5px 0 rgba(255, 152, 0, 0.08)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #ff9800 0%, #ffa726 100%)',
+              boxShadow: '0 12px 32px 0 rgba(255, 152, 0, 0.32)',
+              transform: 'scale(1.08)',
+            },
+            zIndex: 1201,
+          }}
+        >
+          <AddIcon sx={{ fontSize: 28 }} />
+        </Fab>
       </DashboardContainer>
       
       <Menu
