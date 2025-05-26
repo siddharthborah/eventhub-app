@@ -20,6 +20,8 @@ import {
   useMediaQuery,
   Collapse,
   Divider,
+  Card,
+  CardMedia,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -203,6 +205,19 @@ const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
   );
 };
 
+const eventTypeImages = {
+  birthday: '/static/img/event-types/birthday.jpg',
+  anniversary: '/static/img/event-types/anniversary.jpg',
+  wedding: '/static/img/event-types/wedding.jpg',
+  house_party: '/static/img/event-types/house_party.jpg',
+  graduation: '/static/img/event-types/graduation.jpg',
+  corporate: '/static/img/event-types/corporate.jpg',
+  conference: '/static/img/event-types/conference.jpg',
+  workshop: '/static/img/event-types/workshop.jpg',
+  social: '/static/img/event-types/social.jpg',
+  other: '/static/img/event-types/other.jpg', // A default fallback
+};
+
 const CreateEventPage = ({ userId, userInfo }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -236,11 +251,21 @@ const CreateEventPage = ({ userId, userInfo }) => {
     max_attendees: 0,
   });
 
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(eventTypeImages[formData.event_type]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [mapsLoaded, setMapsLoaded] = useState(false);
   const [showAdditionalSettings, setShowAdditionalSettings] = useState(false);
+
+  // Effect to update image preview when event_type or custom image changes
+  useEffect(() => {
+    if (formData.image) {
+      setImagePreviewUrl(formData.image);
+    } else {
+      setImagePreviewUrl(eventTypeImages[formData.event_type] || eventTypeImages.other);
+    }
+  }, [formData.event_type, formData.image]);
 
   // Load Google Maps API
   useEffect(() => {
@@ -281,15 +306,16 @@ const CreateEventPage = ({ userId, userInfo }) => {
   }, []);
 
   const eventTypes = [
-    { value: 'birthday', label: '🎂 Birthday', icon: '🎂' },
-    { value: 'anniversary', label: '💑 Anniversary', icon: '💑' },
-    { value: 'house_party', label: '🏠 House Party', icon: '🏠' },
-    { value: 'wedding', label: '💒 Wedding', icon: '💒' },
-    { value: 'graduation', label: '🎓 Graduation', icon: '🎓' },
-    { value: 'corporate', label: '🏢 Corporate Event', icon: '🏢' },
-    { value: 'conference', label: '🎯 Conference', icon: '🎯' },
-    { value: 'workshop', label: '🛠️ Workshop', icon: '🛠️' },
-    { value: 'social', label: '🎉 Social Gathering', icon: '🎉' },
+    { value: 'birthday', label: '🎂 Birthday' },
+    { value: 'anniversary', label: '💑 Anniversary' },
+    { value: 'house_party', label: '🏠 House Party' },
+    { value: 'wedding', label: '💒 Wedding' },
+    { value: 'graduation', label: '🎓 Graduation' },
+    { value: 'corporate', label: '🏢 Corporate Event' },
+    { value: 'conference', label: '🎯 Conference' },
+    { value: 'workshop', label: '🛠️ Workshop' },
+    { value: 'social', label: '🎉 Social Gathering' },
+    { value: 'other', label: '✨ Other' },
   ];
 
   const handleChange = (field) => (value) => {
@@ -327,7 +353,7 @@ const CreateEventPage = ({ userId, userInfo }) => {
     setError(null);
 
     try {
-      const eventData = {
+      const eventDataToSubmit = { // Renamed to avoid confusion with global eventData
         ...formData,
         user_id: userId,
         event_date: new Date(formData.event_date).toISOString(),
@@ -336,20 +362,22 @@ const CreateEventPage = ({ userId, userInfo }) => {
 
       // Add enhanced venue data if available from Google Places
       if (formData.venueData && typeof formData.venueData === 'object') {
-        eventData.venue_name = formData.venueData.name || '';
-        eventData.venue_place_id = formData.venueData.placeId || '';
+        eventDataToSubmit.venue_name = formData.venueData.name || '';
+        eventDataToSubmit.venue_place_id = formData.venueData.placeId || '';
         if (formData.venueData.coordinates) {
-          eventData.venue_lat = formData.venueData.coordinates.lat || 0;
-          eventData.venue_lng = formData.venueData.coordinates.lng || 0;
+          eventDataToSubmit.venue_lat = formData.venueData.coordinates.lat || 0;
+          eventDataToSubmit.venue_lng = formData.venueData.coordinates.lng || 0;
         }
       }
+      // If formData.image is empty, it means the user is okay with the template image (or no image).
+      // We are currently saving it as empty if no custom URL is provided.
 
       const response = await fetch('/api/events', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(eventData),
+        body: JSON.stringify(eventDataToSubmit),
       });
 
       if (!response.ok) {
@@ -358,9 +386,8 @@ const CreateEventPage = ({ userId, userInfo }) => {
       }
 
       setSuccess(true);
-      // Redirect to events page after 2 seconds
       setTimeout(() => {
-        window.location.href = '/events';
+        window.location.href = '/user'; // Redirect to dashboard (or /events if preferred)
       }, 2000);
     } catch (err) {
       setError(err.message);
@@ -382,7 +409,7 @@ const CreateEventPage = ({ userId, userInfo }) => {
                 Event Created Successfully!
               </Typography>
               <Typography variant="body1" color="text.secondary" mb={3}>
-                Redirecting to your events...
+                Redirecting...
               </Typography>
               <CircularProgress size={30} sx={{ color: '#667eea' }} />
             </Box>
@@ -408,7 +435,38 @@ const CreateEventPage = ({ userId, userInfo }) => {
           <StyledPaper>
             <Box component="form" onSubmit={handleSubmit}>
               <Grid container spacing={3}>
-                {/* Basic Information */}
+                <Grid item xs={12}>
+                  <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
+                    Create New Event
+                  </Typography>
+                  <Divider sx={{ mb: 2 }}/>
+                </Grid>
+
+                {/* Image Preview Section */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mb: 1 }}>
+                    Event Image
+                  </Typography>
+                  <Card sx={{ mb: 2, borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+                    <CardMedia
+                      component="img"
+                      height="250"
+                      image={imagePreviewUrl}
+                      alt="Event image preview"
+                      sx={{ objectFit: 'cover' }}
+                      onError={(e) => {
+                        // Fallback if image fails to load (e.g. bad custom URL or missing template)
+                        e.target.onerror = null; // prevent infinite loop
+                        e.target.src = eventTypeImages.other; 
+                      }}
+                    />
+                  </Card>
+                  <Typography variant="caption" color="text.secondary">
+                    Select an event type to see a template image, or provide your own URL below.
+                  </Typography>
+                </Grid>
+                {/* End Image Preview Section */}
+                
                 <Grid item xs={12}>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
                     Basic Information
@@ -544,10 +602,11 @@ const CreateEventPage = ({ userId, userInfo }) => {
                   <Collapse in={showAdditionalSettings} timeout="auto" unmountOnExit sx={{ width: '100%'}}>
                     <TextField
                       fullWidth
-                      label="Event Image URL"
+                      label="Event Image URL (Custom)"
                       value={formData.image}
                       onChange={handleChange('image')}
-                      placeholder="https://example.com/image.jpg"
+                      placeholder="https://example.com/your-custom-image.jpg"
+                      helperText="Leave empty to use template image based on event type."
                     />
                   </Collapse>
                 </Grid>
@@ -557,7 +616,7 @@ const CreateEventPage = ({ userId, userInfo }) => {
                   <Box display="flex" gap={2} justifyContent="flex-end" sx={{ mt: 3 }}>
                     <SecondaryButton
                       variant="outlined"
-                      onClick={() => window.location.href = '/events'}
+                      onClick={() => window.location.href = '/user'} // Redirect to dashboard
                       disabled={loading}
                     >
                       Cancel

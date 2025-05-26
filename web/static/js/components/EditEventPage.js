@@ -18,6 +18,8 @@ import {
   useMediaQuery,
   Collapse,
   Divider,
+  Card,
+  CardMedia,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -192,6 +194,17 @@ const GooglePlacesAutocomplete = ({ value, onChange, ...props }) => {
   );
 };
 
+const eventTypeImages = {
+  birthday: '/static/img/event-types/birthday.jpg',
+  anniversary: '/static/img/event-types/anniversary.jpg',
+  wedding: '/static/img/event-types/wedding.jpg',
+  house_party: '/static/img/event-types/house_party.jpg',
+  graduation: '/static/img/event-types/graduation.jpg',
+  corporate: '/static/img/event-types/corporate.jpg',
+  // Add other event types and their images here if needed
+  other: '/static/img/event-types/other.jpg', // Default fallback
+};
+
 const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -203,11 +216,12 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
     venue: '',
     venueData: null,
     event_date: '',
-    image: '',
+    image: '', // User's custom image URL
     event_type: 'birthday',
     max_attendees: '',
   });
 
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -216,7 +230,6 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
   // Load event data when component mounts
   useEffect(() => {
     if (eventData) {
-      // Format the date for datetime-local input
       const eventDate = new Date(eventData.event_date);
       const formattedDate = eventDate.toISOString().slice(0, 16);
 
@@ -224,19 +237,27 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
         title: eventData.title || '',
         description: eventData.description || '',
         venue: eventData.venue || '',
-        venueData: null, // Will be populated if we have enhanced venue data
+        venueData: eventData.venueData || null, // Retain existing venueData if present
         event_date: formattedDate,
-        image: eventData.image || '',
+        image: eventData.image || '', // Initialize with existing image URL if any
         event_type: eventData.event_type || 'birthday',
         max_attendees: eventData.max_attendees || '',
       });
 
-      // Show additional settings if any advanced fields are set
       if (eventData.max_attendees > 0 || eventData.image) {
         setShowAdditionalSettings(true);
       }
     }
   }, [eventData]);
+
+  // Effect to update image preview when event_type or custom image (formData.image) changes
+  useEffect(() => {
+    if (formData.image) { // User has provided a custom image URL
+      setImagePreviewUrl(formData.image);
+    } else { // No custom image, use template based on event type
+      setImagePreviewUrl(eventTypeImages[formData.event_type] || eventTypeImages.other);
+    }
+  }, [formData.event_type, formData.image]);
 
   const handleChange = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
@@ -266,7 +287,6 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
         max_attendees: parseInt(formData.max_attendees) || 0,
       };
 
-      // Add enhanced venue data if available from Google Places
       if (formData.venueData && typeof formData.venueData === 'object') {
         updateData.venue_name = formData.venueData.name || '';
         updateData.venue_place_id = formData.venueData.placeId || '';
@@ -275,8 +295,6 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
           updateData.venue_lng = formData.venueData.coordinates.lng || 0;
         }
       }
-
-      // Remove fields that shouldn't be updated
       delete updateData.venueData;
 
       const response = await fetch(`/api/events/${eventId}`, {
@@ -293,7 +311,6 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
       }
 
       setSuccess(true);
-      // Redirect to event detail page after 2 seconds
       setTimeout(() => {
         window.location.href = `/events/${eventId}`;
       }, 2000);
@@ -326,7 +343,6 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
       <SharedHeader currentPage="/edit-event" userInfo={userInfo} />
       <PageContainer>
         <Container maxWidth="md">
-          {/* Header */}
           <Box mb={4} display="flex" alignItems="center" gap={2}>
             <IconButton 
               onClick={() => window.location.href = `/events/${eventId}`}
@@ -351,18 +367,39 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
             </Typography>
           </Box>
 
-          {/* Error Alert */}
           {error && (
             <Alert severity="error" sx={{ mb: 4, borderRadius: '12px' }}>
               {error}
             </Alert>
           )}
 
-          {/* Form */}
           <StyledPaper>
             <Box component="form" onSubmit={handleSubmit}>
               <Grid container spacing={3}>
-                {/* Basic Information */}
+                {/* Image Preview Section */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mb: 1 }}>
+                    Event Image
+                  </Typography>
+                  <Card sx={{ mb: 2, borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+                    <CardMedia
+                      component="img"
+                      height="250"
+                      image={imagePreviewUrl}
+                      alt="Event image preview"
+                      sx={{ objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.target.onerror = null; 
+                        e.target.src = eventTypeImages.other;
+                      }}
+                    />
+                  </Card>
+                  <Typography variant="caption" color="text.secondary">
+                    Select an event type to change the template image, or provide a custom URL below.
+                  </Typography>
+                </Grid>
+                {/* End Image Preview Section */}
+
                 <Grid item xs={12}>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
                     Basic Information
@@ -409,7 +446,6 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
                   </FormControl>
                 </Grid>
 
-                {/* Date and Location */}
                 <Grid item xs={12}>
                   <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mt: 2 }}>
                     Date & Location
@@ -430,11 +466,10 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
                   />
                 </Grid>
 
-                <Grid item xs={12}>
+                <Grid item xs={12} sm={6}>
                   <GooglePlacesAutocomplete
-                    ref={autocompleteRef}
-                    onPlaceSelect={handleVenueSelect}
                     value={formData.venue}
+                    onChange={handleVenueSelect}
                     placeholder="Enter event location..."
                     label="Venue"
                     required
@@ -442,7 +477,6 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
                   />
                 </Grid>
 
-                {/* Additional Settings */}
                 <Grid item xs={12}>
                     <Button 
                         fullWidth 
@@ -465,7 +499,6 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
                     <Divider sx={{ mt:1, mb: showAdditionalSettings ? 2 : 0 }}/>
                 </Grid>
                 
-                {/* Collapsed Content: Max Attendees */}
                 <Grid item xs={12} sm={6}>
                   <Collapse in={showAdditionalSettings} timeout="auto" unmountOnExit sx={{ width: '100%'}}>
                     <TextField
@@ -480,20 +513,19 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
                   </Collapse>
                 </Grid>
 
-                {/* Collapsed Content: Event Image URL */}
                 <Grid item xs={12} sm={6}>
                   <Collapse in={showAdditionalSettings} timeout="auto" unmountOnExit sx={{ width: '100%'}}>
                     <TextField
                       fullWidth
-                      label="Event Image URL"
+                      label="Event Image URL (Custom)"
                       value={formData.image}
                       onChange={handleChange('image')}
-                      placeholder="https://example.com/image.jpg"
+                      placeholder="https://example.com/your-custom-image.jpg"
+                      helperText="Leave empty to use template image based on event type."
                     />
                   </Collapse>
                 </Grid>
 
-                {/* Submit Button */}
                 <Grid item xs={12}>
                   <Box display="flex" gap={2} justifyContent="flex-end" sx={{ mt: 3 }}>
                     <SecondaryButton
@@ -522,7 +554,6 @@ const EditEventPage = ({ userId, userInfo, eventId, eventData }) => {
   );
 };
 
-// Make component available globally for the simple HTML page
 window.EditEventPage = EditEventPage;
 
 export default EditEventPage; 

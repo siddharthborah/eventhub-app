@@ -37,6 +37,19 @@ import {
 } from '@mui/icons-material';
 import SharedHeader from './SharedHeader.js';
 
+const eventTypeImages = {
+  birthday: '/static/img/event-types/birthday.jpg',
+  anniversary: '/static/img/event-types/anniversary.jpg',
+  wedding: '/static/img/event-types/wedding.jpg',
+  house_party: '/static/img/event-types/house_party.jpg',
+  graduation: '/static/img/event-types/graduation.jpg',
+  corporate: '/static/img/event-types/corporate.jpg',
+  conference: '/static/img/event-types/conference.jpg',
+  workshop: '/static/img/event-types/workshop.jpg',
+  social: '/static/img/event-types/social.jpg',
+  other: '/static/img/event-types/other.jpg', // A default fallback
+};
+
 const PageContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -432,6 +445,11 @@ const EventDetailPage = ({ eventId, userInfo: propUserInfo }) => {
 
   const isOwner = userInfo && event && event.user_id === userInfo.user_id;
 
+  let imageUrlToDisplay = event.image; // Custom image URL
+  if (!imageUrlToDisplay && event.event_type) {
+    imageUrlToDisplay = eventTypeImages[event.event_type] || eventTypeImages.other;
+  }
+
   return (
     <>
       {typeof SharedHeader !== 'undefined' && (
@@ -440,12 +458,17 @@ const EventDetailPage = ({ eventId, userInfo: propUserInfo }) => {
       <PageContainer>
         <Container maxWidth="md">
           <EventCard>
-            {event.image ? (
+            {imageUrlToDisplay ? (
               <CardMedia
                 component="img"
                 height="300"
-                image={event.image}
+                image={imageUrlToDisplay}
                 alt={event.title}
+                onError={(e) => {
+                  // Fallback if image fails to load
+                  e.target.onerror = null; // prevent infinite loop
+                  e.target.src = eventTypeImages.other; // or a more generic placeholder
+                }}
               />
             ) : (
               <EventImage>

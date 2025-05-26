@@ -19,6 +19,7 @@ import {
   Fab,
   Menu,
   MenuItem,
+  CardMedia,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -33,6 +34,19 @@ import {
   Schedule as ScheduleIcon,
 } from '@mui/icons-material';
 import SharedHeader from './SharedHeader';
+
+const eventTypeImages = {
+  birthday: '/static/img/event-types/birthday.jpg',
+  anniversary: '/static/img/event-types/anniversary.jpg',
+  wedding: '/static/img/event-types/wedding.jpg',
+  house_party: '/static/img/event-types/house_party.jpg',
+  graduation: '/static/img/event-types/graduation.jpg',
+  corporate: '/static/img/event-types/corporate.jpg',
+  conference: '/static/img/event-types/conference.jpg',
+  workshop: '/static/img/event-types/workshop.jpg',
+  social: '/static/img/event-types/social.jpg',
+  other: '/static/img/event-types/other.jpg', // A default fallback
+};
 
 const PageContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
@@ -274,101 +288,121 @@ const MyEventsPage = ({ userId, userInfo }) => {
             </StyledPaper>
           ) : (
             <Grid container spacing={3}>
-              {events.map((event) => (
-                <Grid item xs={12} sm={6} lg={4} key={event.id}>
-                  <EventCard>
-                    <CardContent>
-                      <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Typography variant="h2" sx={{ fontSize: '1.5rem' }}>
-                            {getEventTypeIcon(event.event_type)}
-                          </Typography>
-                          <StatusChip 
-                            label={event.status} 
-                            size="small" 
-                            status={event.status}
-                          />
-                        </Box>
-                        <IconButton 
-                          size="small"
-                          onClick={(e) => handleMenuOpen(e, event.id)}
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
-                      </Box>
+              {events.map((event) => {
+                let imageUrlToDisplay = event.image; // Custom image URL
+                if (!imageUrlToDisplay && event.event_type) {
+                  imageUrlToDisplay = eventTypeImages[event.event_type] || eventTypeImages.other;
+                }
 
-                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                        {event.title}
-                      </Typography>
-                      
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        {event.description}
-                      </Typography>
-
-                      <Box display="flex" alignItems="center" gap={1} mb={1}>
-                        <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                        <Typography variant="body2" color="text.secondary">
-                          {formatDate(event.event_date)}
-                        </Typography>
-                      </Box>
-
-                      {event.venue && (
-                        <Box display="flex" alignItems="center" gap={1} mb={1}>
-                          <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            {event.venue}
-                          </Typography>
-                        </Box>
-                      )}
-
-                      {event.max_attendees > 0 && (
-                        <Box display="flex" alignItems="center" gap={1} mb={2}>
-                          <PeopleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            Max {event.max_attendees} attendees
-                          </Typography>
-                        </Box>
-                      )}
-
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Chip 
-                          label={event.event_type.replace('_', ' ')} 
-                          size="small" 
-                          variant="outlined"
-                          sx={{ textTransform: 'capitalize' }}
+                return (
+                  <Grid item xs={12} sm={6} lg={4} key={event.id}>
+                    <EventCard>
+                      {imageUrlToDisplay && (
+                        <CardMedia
+                          component="img"
+                          height="140" // Adjust height as needed for tiles
+                          image={imageUrlToDisplay}
+                          alt={event.title}
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            e.target.onerror = null; // prevent infinite loop
+                            e.target.src = eventTypeImages.other; // or a more generic placeholder
+                          }}
                         />
-                        {event.is_public && (
+                      )}
+                      <CardContent>
+                        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={imageUrlToDisplay ? 1 : 2}> {/* Adjust margin if image is present */}
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <Typography variant="h2" sx={{ fontSize: '1.5rem' }}>
+                              {getEventTypeIcon(event.event_type)}
+                            </Typography>
+                            <StatusChip 
+                              label={event.status} 
+                              size="small" 
+                              status={event.status}
+                            />
+                          </Box>
+                          <IconButton 
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, event.id)}
+                          >
+                            <MoreVertIcon />
+                          </IconButton>
+                        </Box>
+
+                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                          {event.title}
+                        </Typography>
+                        
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          {event.description}
+                        </Typography>
+
+                        <Box display="flex" alignItems="center" gap={1} mb={1}>
+                          <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                          <Typography variant="body2" color="text.secondary">
+                            {formatDate(event.event_date)}
+                          </Typography>
+                        </Box>
+
+                        {event.venue && (
+                          <Box display="flex" alignItems="center" gap={1} mb={1}>
+                            <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            <Typography variant="body2" color="text.secondary">
+                              {event.venue}
+                            </Typography>
+                          </Box>
+                        )}
+
+                        {event.max_attendees > 0 && (
+                          <Box display="flex" alignItems="center" gap={1} mb={2}>
+                            <PeopleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                            <Typography variant="body2" color="text.secondary">
+                              Max {event.max_attendees} attendees
+                            </Typography>
+                          </Box>
+                        )}
+
+                        <Box display="flex" alignItems="center" gap={1}>
                           <Chip 
-                            label="Public" 
+                            label={event.event_type.replace('_', ' ')} 
                             size="small" 
                             variant="outlined"
-                            color="primary"
+                            sx={{ textTransform: 'capitalize' }}
                           />
-                        )}
-                      </Box>
-                    </CardContent>
+                          {event.is_public && (
+                            <Chip 
+                              label="Public" 
+                              size="small" 
+                              variant="outlined"
+                              color="primary"
+                            />
+                          )}
+                        </Box>
+                      </CardContent>
 
-                    <CardActions sx={{ px: 2, pb: 2, gap: 1 }}>
-                      <SecondaryButton 
-                        size="small" 
-                        startIcon={<VisibilityIcon />} 
-                        onClick={() => handleViewEvent(event.id)}
-                        sx={{ fontSize: '0.875rem', py: 0.5, px: 1.5 }}
-                      >
-                        View
-                      </SecondaryButton>
-                      <SecondaryButton 
-                        size="small" 
-                        startIcon={<EditIcon />} 
-                        onClick={() => handleEditEvent(event.id)}
-                        sx={{ fontSize: '0.875rem', py: 0.5, px: 1.5 }}
-                      >
-                        Edit
-                      </SecondaryButton>
-                    </CardActions>
-                  </EventCard>
-                </Grid>
-              ))}
+                      <CardActions sx={{ px: 2, pb: 2, gap: 1 }}>
+                        <SecondaryButton 
+                          size="small" 
+                          startIcon={<VisibilityIcon />} 
+                          onClick={() => handleViewEvent(event.id)}
+                          sx={{ fontSize: '0.875rem', py: 0.5, px: 1.5 }}
+                        >
+                          View
+                        </SecondaryButton>
+                        <SecondaryButton 
+                          size="small" 
+                          startIcon={<EditIcon />} 
+                          onClick={() => handleEditEvent(event.id)}
+                          sx={{ fontSize: '0.875rem', py: 0.5, px: 1.5 }}
+                        >
+                          Edit
+                        </SecondaryButton>
+                      </CardActions>
+                    </EventCard>
+                  </Grid>
+                );
+              })}
             </Grid>
           )}
 

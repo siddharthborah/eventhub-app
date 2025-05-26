@@ -24,6 +24,7 @@ import {
   DialogTitle,
   Snackbar,
   Alert,
+  CardMedia,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -42,6 +43,19 @@ import {
   Cancel as CancelIcon,
 } from '@mui/icons-material';
 import SharedHeader from './SharedHeader';
+
+const eventTypeImages = {
+  birthday: '/static/img/event-types/birthday.jpg',
+  anniversary: '/static/img/event-types/anniversary.jpg',
+  wedding: '/static/img/event-types/wedding.jpg',
+  house_party: '/static/img/event-types/house_party.jpg',
+  graduation: '/static/img/event-types/graduation.jpg',
+  corporate: '/static/img/event-types/corporate.jpg',
+  conference: '/static/img/event-types/conference.jpg',
+  workshop: '/static/img/event-types/workshop.jpg',
+  social: '/static/img/event-types/social.jpg',
+  other: '/static/img/event-types/other.jpg', // A default fallback
+};
 
 const DashboardContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
@@ -407,9 +421,27 @@ const UserDashboard = ({ userData }) => {
                     ) : myEvents.length > 0 ? (
                       <Grid container spacing={2}>
                         {myEvents.map((event) => {
+                          let imageUrlToDisplay = event.image; // Custom image URL
+                          if (!imageUrlToDisplay && event.event_type) {
+                            imageUrlToDisplay = eventTypeImages[event.event_type] || eventTypeImages.other;
+                          }
+
                           return (
                           <Grid item xs={12} sm={6} md={4} key={event.id}>
                             <EventCard onClick={(e) => handleCardClick(event.id, e)} sx={{cursor: 'pointer'}}>
+                              {imageUrlToDisplay && (
+                                <CardMedia
+                                  component="img"
+                                  height="140" // Adjust height as needed for tiles
+                                  image={imageUrlToDisplay}
+                                  alt={event.title}
+                                  onError={(e) => {
+                                    // Fallback if image fails to load
+                                    e.target.onerror = null; // prevent infinite loop
+                                    e.target.src = eventTypeImages.other; // or a more generic placeholder
+                                  }}
+                                />
+                              )}
                               <CardContent sx={{ pb: 2 }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                   <Typography 
@@ -507,9 +539,27 @@ const UserDashboard = ({ userData }) => {
                       <Grid container spacing={2}>
                         {rsvpEvents.map((rsvp) => {
                           const responseStyle = getRSVPResponseStyle(rsvp.response);
+                          let imageUrlToDisplay = rsvp.event.image; // Custom image URL
+                          if (!imageUrlToDisplay && rsvp.event.event_type) {
+                            imageUrlToDisplay = eventTypeImages[rsvp.event.event_type] || eventTypeImages.other;
+                          }
+
                           return (
                           <Grid item xs={12} sm={6} md={4} key={rsvp.id}>
                             <EventCard onClick={() => window.location.href = `/events/${rsvp.event.id}`}>
+                              {imageUrlToDisplay && (
+                                <CardMedia
+                                  component="img"
+                                  height="140" // Adjust height as needed for tiles
+                                  image={imageUrlToDisplay}
+                                  alt={rsvp.event.title}
+                                  onError={(e) => {
+                                    // Fallback if image fails to load
+                                    e.target.onerror = null; // prevent infinite loop
+                                    e.target.src = eventTypeImages.other; // or a more generic placeholder
+                                  }}
+                                />
+                              )}
                               <CardContent sx={{ pb: 2 }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                                   <Typography 
