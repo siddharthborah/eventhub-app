@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -89,6 +89,32 @@ const SharedHeader = ({ currentPage, userInfo }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState(null);
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
+  const [showHeader, setShowHeader] = useState(true);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          if (currentScrollY < 20) {
+            setShowHeader(true);
+          } else if (currentScrollY > lastScrollY) {
+            setShowHeader(false); // scrolling down
+          } else if (currentScrollY < lastScrollY) {
+            setShowHeader(true); // scrolling up
+          }
+          lastScrollY = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isMobile]);
 
   const handleLogoClick = () => {
     window.location.href = '/user';
@@ -135,10 +161,40 @@ const SharedHeader = ({ currentPage, userInfo }) => {
   ];
 
   return (
-    <HeaderContainer>
+    <HeaderContainer
+      sx={isMobile ? {
+        transition: 'transform 0.3s cubic-bezier(.4,0,.2,1)',
+        transform: showHeader ? 'translateY(0)' : 'translateY(-120%)',
+        pointerEvents: showHeader ? 'auto' : 'none',
+      } : {}}
+    >
       <HeaderContent maxWidth="lg">
-        {/* Logo */}
-        <Logo onClick={handleLogoClick}>
+        {/* Avatar on the left */}
+        <Box display="flex" alignItems="center" gap={1}>
+          <IconButton onClick={handleProfileMenuOpen} size="small">
+            {userInfo?.picture ? (
+              <Avatar 
+                src={userInfo.picture} 
+                alt={userInfo.name || 'User'} 
+                sx={{ width: 36, height: 36 }}
+              />
+            ) : (
+              <Avatar 
+                sx={{ 
+                  width: 36, 
+                  height: 36,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                }}
+              >
+                {userInfo?.name ? userInfo.name.charAt(0).toUpperCase() : (userInfo?.nickname ? userInfo.nickname.charAt(0).toUpperCase() : 'U')}
+              </Avatar>
+            )}
+          </IconButton>
+        </Box>
+        {/* Logo on the right */}
+        <Logo onClick={handleLogoClick} sx={{ ml: 'auto' }}>
           <EventHubLogo 
             height={32} 
             width={112} 
@@ -148,7 +204,6 @@ const SharedHeader = ({ currentPage, userInfo }) => {
             }}
           />
         </Logo>
-
         {/* Desktop Navigation */}
         {!isMobile && (
           <Box display="flex" alignItems="center" gap={2}>
@@ -177,75 +232,7 @@ const SharedHeader = ({ currentPage, userInfo }) => {
             ))}
           </Box>
         )}
-
-        {/* User Profile & Mobile Menu */}
-        <Box display="flex" alignItems="center" gap={1}>
-          {/* User Profile */}
-          <IconButton onClick={handleProfileMenuOpen} size="small">
-            {userInfo?.picture ? (
-              <Avatar 
-                src={userInfo.picture} 
-                alt={userInfo.name || 'User'} 
-                sx={{ width: 36, height: 36 }}
-              />
-            ) : (
-              <Avatar 
-                sx={{ 
-                  width: 36, 
-                  height: 36,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                }}
-              >
-                {userInfo?.name ? userInfo.name.charAt(0).toUpperCase() : (userInfo?.nickname ? userInfo.nickname.charAt(0).toUpperCase() : 'U')}
-              </Avatar>
-            )}
-          </IconButton>
-
-          {/* Mobile Menu Button */}
-          {isMobile && (
-            <IconButton onClick={handleMobileMenuOpen} size="small">
-              <MenuIcon />
-            </IconButton>
-          )}
-        </Box>
-
-        {/* Mobile Navigation Menu */}
-        <Menu
-          anchorEl={mobileMenuAnchor}
-          open={Boolean(mobileMenuAnchor)}
-          onClose={handleMobileMenuClose}
-          PaperProps={{
-            sx: {
-              borderRadius: '12px',
-              mt: 1,
-              '& .MuiMenuItem-root': {
-                borderRadius: '8px',
-                margin: '2px 8px',
-                fontWeight: 600,
-              },
-            },
-          }}
-        >
-          {navigationItems.map((item) => (
-            <MenuItem 
-              key={item.path}
-              onClick={() => handleNavigation(item.path)}
-              sx={{
-                color: item.primary ? '#667eea' : 'inherit',
-                fontWeight: item.primary ? 700 : 600,
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={1}>
-                {item.icon && item.icon}
-                {item.label}
-              </Box>
-            </MenuItem>
-          ))}
-        </Menu>
-
-        {/* Profile Menu */}
+        {/* Combined Profile & Navigation Menu */}
         <Menu
           anchorEl={profileMenuAnchor}
           open={Boolean(profileMenuAnchor)}
@@ -290,6 +277,7 @@ const SharedHeader = ({ currentPage, userInfo }) => {
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
+          {/* Profile Info */}
           {userInfo?.name && (
             <MenuItem sx={{ fontWeight: 600, color: '#2d3748', '&:hover': { backgroundColor: 'transparent !important'} }} disabled>
               {userInfo.name}
@@ -301,6 +289,22 @@ const SharedHeader = ({ currentPage, userInfo }) => {
             </MenuItem>
           )}
           {(userInfo?.name || userInfo?.email) && <Box sx={{ my: 0.5, mx: 1, borderTop: '1px solid #e0e0e0' }} />}
+          {/* Navigation Items (always shown on mobile, optional on desktop) */}
+          {navigationItems.map((item) => (
+            <MenuItem 
+              key={item.path}
+              onClick={() => handleNavigation(item.path)}
+              sx={{
+                color: item.primary ? '#667eea' : 'inherit',
+                fontWeight: item.primary ? 700 : 600,
+              }}
+            >
+              <Box display="flex" alignItems="center" gap={1}>
+                {item.icon && item.icon}
+                {item.label}
+              </Box>
+            </MenuItem>
+          ))}
           <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
             <ListItemIcon sx={{ color: 'error.main' }}>
               <LogoutIcon fontSize="small" />
