@@ -27,15 +27,15 @@ import EventHubLogo from './EventHubLogo';
 
 const HeaderContainer = styled(Box)(({ theme }) => ({
   position: 'fixed',
-  top: theme.spacing(2),
-  left: theme.spacing(2),
-  right: theme.spacing(2),
+  top: 0,
+  left: 0,
+  right: 0,
   zIndex: 1000,
-  background: 'rgba(255, 255, 255, 0.95)',
+  background: 'linear-gradient(180deg, rgba(255,255,255,0.97) 80%, rgba(255,255,255,0.85) 100%)',
   backdropFilter: 'blur(20px)',
-  borderRadius: '16px',
-  boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
+  borderRadius: 0,
+  boxShadow: '0 4px 24px 0 rgba(102, 126, 234, 0.10), 0 1.5px 0 rgba(102, 126, 234, 0.04)',
+  borderBottom: '1.5px solid rgba(102, 126, 234, 0.10)',
 }));
 
 const HeaderContent = styled(Container)(({ theme }) => ({
@@ -95,6 +95,7 @@ const SharedHeader = ({ currentPage, userInfo }) => {
     if (!isMobile) return;
     let lastScrollY = window.scrollY;
     let ticking = false;
+    const threshold = window.innerHeight / 2;
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
@@ -102,7 +103,11 @@ const SharedHeader = ({ currentPage, userInfo }) => {
           if (currentScrollY < 20) {
             setShowHeader(true);
           } else if (currentScrollY > lastScrollY) {
-            setShowHeader(false); // scrolling down
+            if (currentScrollY > threshold) {
+              setShowHeader(false); // scrolling down, past threshold
+            } else {
+              setShowHeader(true); // don't hide before threshold
+            }
           } else if (currentScrollY < lastScrollY) {
             setShowHeader(true); // scrolling up
           }
