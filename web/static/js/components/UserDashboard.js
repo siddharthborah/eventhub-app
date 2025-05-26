@@ -63,7 +63,7 @@ const eventTypeImages = {
 const DashboardContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  paddingTop: theme.spacing(12), // Space for floating header
+  paddingTop: theme.spacing(7),
   paddingBottom: theme.spacing(4),
 }));
 
@@ -133,6 +133,16 @@ const EventCard = styled(Card)(({ theme }) => ({
   },
 }));
 
+const HeaderContent = styled(Container)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: theme.spacing(0.75, 3),
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(0.5, 2),
+  },
+}));
+
 const UserDashboard = ({ userData }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -150,7 +160,7 @@ const UserDashboard = ({ userData }) => {
   
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  const [viewMode, setViewMode] = useState('hosting'); // 'hosting' or 'attending'
+  const [viewMode, setViewMode] = useState('upcoming'); // 'hosting' or 'attending' or 'upcoming'
 
   useEffect(() => {
     fetchRSVPEvents();
@@ -366,6 +376,20 @@ const UserDashboard = ({ userData }) => {
     window.location.href = `/events/${eventId}`;
   };
 
+  const now = new Date();
+  const upcomingHosted = myEvents.filter(event => {
+    const eventDate = new Date(event.event_date);
+    return eventDate >= now;
+  });
+  const upcomingInvited = rsvpEvents.filter(rsvp => {
+    const eventDate = new Date(rsvp.event.event_date);
+    return eventDate >= now;
+  });
+  const upcomingEvents = [
+    ...upcomingHosted.map(event => ({ ...event, _type: 'host' })),
+    ...upcomingInvited.map(rsvp => ({ ...rsvp.event, _type: 'attendee', rsvpResponse: rsvp.response })),
+  ].sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+
   return (
     <>
       <SharedHeader currentPage="/user" userInfo={userData} />
@@ -375,33 +399,18 @@ const UserDashboard = ({ userData }) => {
             <Grid item xs={12} md={12}>
               <Grid container spacing={3}>
                 <Grid item xs={12}>
-                  <StyledPaper>
-                    <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, color: '#2d3748' }}>
-                      Welcome Back, {userData.nickname}! 👋
-                    </Typography>
-                    {!myEventsLoading && myEvents && myEvents.length > 0 ? (
-                        (() => {
-                            const eventsThisWeekCount = countEventsThisWeek(myEvents);
-                            if (eventsThisWeekCount > 0) {
-                                return (
-                                    <Typography variant="body1" color="text.secondary">
-                                        You have {eventsThisWeekCount} event{eventsThisWeekCount > 1 ? 's' : ''} this week.
-                                    </Typography>
-                                );
-                            } else {
-                                return (
-                                    <Typography variant="body1" color="text.secondary">
-                                       You have no events scheduled for this week. Why not create one?
-                                    </Typography>
-                                );
-                            }
-                        })()
-                    ) : !myEventsLoading ? (
+                  {(() => {
+                    const eventsThisWeekCount = countEventsThisWeek(myEvents);
+                    if (eventsThisWeekCount > 0) {
+                      return (
                         <Typography variant="body1" color="text.secondary">
-                           Ready to create amazing events? Here's your dashboard overview.
+                          You have {eventsThisWeekCount} event{eventsThisWeekCount > 1 ? 's' : ''} this week.
                         </Typography>
-                    ) : null /* Don't show anything while myEvents are loading */ }
-                  </StyledPaper>
+                      );
+                    } else {
+                      return null;
+                    }
+                  })()}
                 </Grid>
 
                 <Grid item xs={12}>
@@ -413,6 +422,7 @@ const UserDashboard = ({ userData }) => {
                           value={viewMode}
                           onChange={e => setViewMode(e.target.value)}
                         >
+                          <MenuItem value="upcoming">Upcoming</MenuItem>
                           <MenuItem value="hosting">Hosting</MenuItem>
                           <MenuItem value="attending">Attending</MenuItem>
                         </Select>
@@ -545,6 +555,108 @@ const UserDashboard = ({ userData }) => {
                           </Typography>
                           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                             Start by creating your first event
+                          </Typography>
+                          <PrimaryButton href="/create-event">
+                            <AddIcon />
+                          </PrimaryButton>
+                        </Box>
+                      )
+                    ) : viewMode === 'upcoming' ? (
+                      myEventsLoading || loading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                          <CircularProgress />
+                        </Box>
+                      ) : upcomingEvents.length > 0 ? (
+                        <Grid container spacing={2}>
+                          {upcomingEvents.map((event) => {
+                            let imageUrlToDisplay = event.image;
+                            if (!imageUrlToDisplay && event.event_type) {
+                              imageUrlToDisplay = eventTypeImages[event.event_type] || eventTypeImages.other;
+                            }
+                            return (
+                              <Grid item xs={12} sm={6} md={4} key={event.id + (event._type || '')}>
+                                <EventCard onClick={(e) => handleCardClick(event.id, e)} sx={{cursor: 'pointer'}}>
+                                  {imageUrlToDisplay && (
+                                    <CardMedia
+                                      component="img"
+                                      height="140"
+                                      image={imageUrlToDisplay}
+                                      alt={event.title}
+                                      onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = eventTypeImages.other;
+                                      }}
+                                    />
+                                  )}
+                                  <CardContent sx={{ pb: 2 }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                      <Typography 
+                                        variant="h6" 
+                                        sx={{ 
+                                          fontWeight: 600, 
+                                          color: '#2d3748',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap',
+                                          flexGrow: 1,
+                                          mr: 1,
+                                        }}
+                                        title={event.title}
+                                      >
+                                        {event.title}
+                                      </Typography>
+                                      {event._type === 'host' ? (
+                                        <Chip label="Hosting" size="small" sx={{ backgroundColor: '#667eea', color: 'white', ml: 1 }} />
+                                      ) : (
+                                        <Chip label="Attending" size="small" sx={{ backgroundColor: '#764ba2', color: 'white', ml: 1 }} />
+                                      )}
+                                    </Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                      <ScheduleIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
+                                      <Typography 
+                                        variant="body2" 
+                                        color="text.secondary"
+                                        sx={{
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap'
+                                        }}
+                                      >
+                                        {formatEventDate(event.event_date)}
+                                      </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                      <LocationOnIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
+                                      <Typography 
+                                        variant="body2" 
+                                        color="text.secondary"
+                                        title={event.venue}
+                                      >
+                                        {event.venue}
+                                      </Typography>
+                                    </Box>
+                                    <Chip 
+                                      label={`${getEventTypeIcon(event.event_type)} ${event.event_type.replace('_', ' ')}`}
+                                      size="small" 
+                                      sx={{ 
+                                        backgroundColor: '#667eea', 
+                                        color: 'white',
+                                        textTransform: 'capitalize'
+                                      }} 
+                                    />
+                                  </CardContent>
+                                </EventCard>
+                              </Grid>
+                            );
+                          })}
+                        </Grid>
+                      ) : (
+                        <Box sx={{ textAlign: 'center', py: 4 }}>
+                          <Typography variant="h6" color="text.secondary" gutterBottom>
+                            No future events!
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            You have no future events scheduled.
                           </Typography>
                           <PrimaryButton href="/create-event">
                             <AddIcon />
