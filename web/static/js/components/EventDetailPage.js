@@ -19,6 +19,8 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -34,6 +36,8 @@ import {
   Help as HelpIcon,
   ContentCopy as CopyIcon,
   Event as EventIcon,
+  MoreVert as MoreVertIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import SharedHeader from './SharedHeader.js';
 
@@ -85,15 +89,17 @@ const EventImage = styled(Box)(({ theme }) => ({
 
 const DetailItem = styled(Box)(({ theme }) => ({
   display: 'flex',
-  alignItems: 'flex-start',
-  gap: theme.spacing(2),
-  marginBottom: theme.spacing(3),
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  marginBottom: theme.spacing(2.5),
 }));
 
 const DetailIcon = styled(Box)(({ theme }) => ({
   color: '#667eea',
-  fontSize: '24px',
-  marginTop: '2px',
+  fontSize: '18px',
+  marginTop: 0,
+  display: 'flex',
+  alignItems: 'center',
 }));
 
 const RSVPSection = styled(Box)(({ theme }) => ({
@@ -244,6 +250,7 @@ const EventDetailPage = ({ eventId, userInfo: propUserInfo }) => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [submittingRSVP, setSubmittingRSVP] = useState(false);
+  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
 
   useEffect(() => {
     // Use eventId from props or window
@@ -394,19 +401,68 @@ const EventDetailPage = ({ eventId, userInfo: propUserInfo }) => {
   };
 
   const handleShare = () => {
-    setShareDialogOpen(true);
-  };
-
-  const copyShareUrl = () => {
     const id = eventId || window.eventId;
     const url = `${window.location.protocol}//${window.location.host}/events/${id}`;
-    navigator.clipboard.writeText(url);
-    setSnackbar({
-      open: true,
-      message: 'Link copied to clipboard!',
-      severity: 'success'
-    });
-    setShareDialogOpen(false);
+    // Format date/time for sharing
+    const start = new Date(event.event_date);
+    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // +2 hours
+    const formatShareDate = (start, end) => {
+      const options = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
+      const dateStr = start.toLocaleDateString('en-US', options);
+      const startTime = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      return `On ${dateStr}, ${startTime} – ${endTime}`;
+    };
+    const shareText = `${event.title}\n${formatShareDate(start, end)}\nAt ${event.venue}\nView details and RSVP\n${url}`;
+    if (navigator.share) {
+      navigator.share({
+        title: event.title || 'Event',
+        text: shareText,
+        url,
+      }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(shareText);
+      setSnackbar({ open: true, message: 'Event details copied to clipboard!', severity: 'success' });
+    }
+  };
+
+  const handleMenuOpen = (event) => {
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+
+  const handleDelete = () => {
+    handleMenuClose();
+    alert('Delete option clicked!'); // Replace with real delete logic later
+  };
+
+  const handlePlaceholder = () => {
+    handleMenuClose();
+    alert('Placeholder option clicked!');
+  };
+
+  // Add to Google Calendar handler
+  const handleAddToGoogleCalendar = () => {
+    handleMenuClose();
+    if (!event) return;
+    const pad = (n) => n.toString().padStart(2, '0');
+    const formatDate = (date) => {
+      return date.getUTCFullYear().toString() +
+        pad(date.getUTCMonth() + 1) +
+        pad(date.getUTCDate()) + 'T' +
+        pad(date.getUTCHours()) +
+        pad(date.getUTCMinutes()) +
+        pad(date.getUTCSeconds()) + 'Z';
+    };
+    const start = new Date(event.event_date);
+    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // +2 hours
+    const eventUrl = `${window.location.protocol}//${window.location.host}/events/${eventId || window.eventId}`;
+    const details = `${event.description || ''}\n\nEvent link: ${eventUrl}`;
+    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(event.venue || '')}`;
+    window.open(calendarUrl, '_blank');
   };
 
   if (loading) {
@@ -476,343 +532,328 @@ const EventDetailPage = ({ eventId, userInfo: propUserInfo }) => {
               </EventImage>
             )}
             
-            <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
+            <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
               {/* Event Header */}
-              <Box mb={4}>
+              <Box
+                mb={3}
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                flexDirection="row"
+                gap={{ xs: 1, sm: 2 }}
+              >
                 <Typography 
-                  variant={isMobile ? "h4" : "h3"} 
+                  variant={isMobile ? "h4" : "h3"}
                   component="h1" 
-                  gutterBottom 
                   sx={{ 
                     fontWeight: 700, 
                     color: '#2d3748',
-                    fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' }
+                    fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
+                    flexGrow: 1,
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    textAlign: 'left',
                   }}
                 >
                   {event.title}
                 </Typography>
-                <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+                <Box 
+                  display="flex" 
+                  alignItems="center" 
+                  justifyContent="flex-end" 
+                  gap={0} 
+                  sx={{ 
+                    '& .MuiIconButton-root': { 
+                      padding: '4px',
+                      margin: '0 2px'
+                    } 
+                  }}
+                >
+                  <IconButton 
+                    aria-label="Share Event" 
+                    onClick={handleShare} 
+                    size="small"
+                  >
+                    <ShareIcon sx={{ color: 'text.secondary' }} />
+                  </IconButton>
+                  {isOwner && (
+                    <IconButton 
+                      aria-label="More options" 
+                      onClick={handleMenuOpen} 
+                      size="small"
+                    >
+                      <MoreVertIcon sx={{ color: 'text.secondary' }} />
+                    </IconButton>
+                  )}
+                  <Menu
+                    anchorEl={menuAnchorEl}
+                    open={Boolean(menuAnchorEl)}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  >
+                    <MenuItem onClick={() => { handleMenuClose(); window.location.href = `/edit-event/${eventId || window.eventId}`; }}>
+                      <EditIcon sx={{ mr: 1, color: 'text.secondary' }} /> Edit
+                    </MenuItem>
+                    <MenuItem onClick={handleAddToGoogleCalendar}>
+                      <EventIcon sx={{ mr: 1, color: 'primary.main' }} /> Add to Google Calendar
+                    </MenuItem>
+                    <MenuItem onClick={handleDelete}>
+                      <DeleteIcon sx={{ mr: 1, color: 'error.main' }} /> Delete
+                    </MenuItem>
+                    <MenuItem onClick={handlePlaceholder}>
+                      <HelpIcon sx={{ mr: 1, color: 'text.secondary' }} /> Placeholder Option
+                    </MenuItem>
+                  </Menu>
+                </Box>
+              </Box>
+              <Box display="flex" gap={1} alignItems="center" flexWrap="wrap" mb={3}>
+                <Chip 
+                  label={`${getEventTypeIcon(event.event_type)} ${event.event_type.replace('_', ' ')}`}
+                  sx={{ 
+                    backgroundColor: '#667eea', 
+                    color: 'white',
+                    textTransform: 'capitalize',
+                    fontWeight: 500
+                  }} 
+                />
+                {event.status === 'draft' && (
                   <Chip 
-                    label={`${getEventTypeIcon(event.event_type)} ${event.event_type.replace('_', ' ')}`}
-                    sx={{ 
-                      backgroundColor: '#667eea', 
-                      color: 'white',
-                      textTransform: 'capitalize',
-                      fontWeight: 500
-                    }} 
-                  />
-                  <Chip 
-                    label={event.status}
-                    color={event.status === 'published' ? 'success' : 'warning'}
+                    label="Draft"
+                    color="warning"
                     variant="outlined"
                     sx={{ textTransform: 'uppercase', fontWeight: 600 }}
                   />
-                  {!event.is_public && (
-                    <Chip 
-                      label="Private" 
-                      variant="outlined"
-                      sx={{ color: '#4a5568' }}
-                    />
-                  )}
-                </Box>
+                )}
+                {!event.is_public && (
+                  <Chip 
+                    label="Private" 
+                    variant="outlined"
+                    sx={{ color: '#4a5568' }}
+                  />
+                )}
               </Box>
 
               {/* Event Details */}
-              <Grid container spacing={{ xs: 3, sm: 4 }} mb={4}>
+              <Grid container spacing={4}>
+                {/* LEFT COLUMN - Date/Time, Organizer, Description, RSVP */}
                 <Grid item xs={12} sm={6}>
+                  {/* Date/Time Section */}
                   <DetailItem>
                     <DetailIcon>
                       <ScheduleIcon />
                     </DetailIcon>
-                    <Box>
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#2d3748' }}>
-                        Date & Time
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary">
-                        {formatEventDate(event.event_date)}
-                      </Typography>
-                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '1rem' }}>
+                      {formatEventDate(event.event_date)}
+                    </Typography>
                   </DetailItem>
-                </Grid>
 
-                <Grid item xs={12} sm={6}>
-                  <DetailItem>
-                    <DetailIcon>
-                      <LocationIcon />
-                    </DetailIcon>
-                    <Box sx={{ width: '100%' }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#2d3748', mb: 1 }}>
-                        About the Venue
-                      </Typography>
-                      {/* Embedded Map */}
-                      <Box 
-                        sx={{ 
-                          my: 2, 
-                          height: isMobile ? '200px' : '250px', 
-                          width: '100%', 
-                          borderRadius: '16px', 
-                          overflow: 'hidden', 
-                          border: '1px solid #e0e0e0' 
-                        }}
-                      >
-                        <iframe
-                          width="100%"
-                          height="100%"
-                          style={{ border: 0 }}
-                          loading="lazy"
-                          allowFullScreen
-                          referrerPolicy="no-referrer-when-downgrade"
-                          src={`https://www.google.com/maps/embed/v1/place?key=${window.GOOGLE_MAPS_API_KEY || 'YOUR_FALLBACK_API_KEY'}&q=${encodeURIComponent(event.venue)}`}
-                        ></iframe>
-                      </Box>
-                      {/* Clickable Venue Address */}
-                      <Typography 
-                        variant="body1" 
-                        color="text.secondary" 
-                        component="a"
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venue)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sx={{
-                          textDecoration: 'none',
-                          color: 'inherit',
-                          '&:hover': {
-                            textDecoration: 'underline',
-                            color: theme.palette.primary.main,
-                          }
-                        }}
-                      >
-                        {event.venue}
-                      </Typography>
-                    </Box>
-                  </DetailItem>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
+                  {/* Organizer Section */}
                   <DetailItem>
                     <DetailIcon>
                       <PersonIcon />
                     </DetailIcon>
-                    <Box>
-                      <Typography 
-                        variant="h6" 
-                        gutterBottom 
-                        sx={{ 
-                          fontWeight: 600, 
-                          color: '#4a5568',
-                          fontSize: { xs: '1rem', sm: '1.25rem' }
-                        }}
-                      >
-                        Organized by
-                      </Typography>
-                      <Typography color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                        {event.user?.name || 'Unknown'}
-                      </Typography>
-                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '1rem' }}>
+                      {event.user?.name || 'Unknown'}
+                    </Typography>
                   </DetailItem>
-                </Grid>
 
-                {event.max_attendees > 0 && (
-                  <Grid item xs={12} sm={6}>
+                  {/* Max Attendees Section (if applicable) */}
+                  {event.max_attendees > 0 && (
                     <DetailItem>
                       <DetailIcon>
                         <GroupIcon />
                       </DetailIcon>
-                      <Box>
-                        <Typography 
-                          variant="h6" 
-                          gutterBottom 
-                          sx={{ 
-                            fontWeight: 600, 
-                            color: '#4a5568',
-                            fontSize: { xs: '1rem', sm: '1.25rem' }
-                          }}
-                        >
-                          Capacity
-                        </Typography>
-                        <Typography color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                          {event.max_attendees} attendees max
-                        </Typography>
-                      </Box>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '1rem' }}>
+                        {event.max_attendees} attendees max
+                      </Typography>
                     </DetailItem>
-                  </Grid>
-                )}
-              </Grid>
+                  )}
 
-              {/* Event Description */}
-              {event.description && (
-                <Box mb={4} p={{ xs: 2, sm: 3 }} sx={{ backgroundColor: '#f8f9fa', borderRadius: '16px' }}>
-                  <Typography 
-                    variant="h5" 
-                    gutterBottom 
-                    sx={{ 
-                      fontWeight: 600, 
-                      color: '#2d3748',
-                      fontSize: { xs: '1.125rem', sm: '1.5rem' }
-                    }}
-                  >
-                    About this event
-                  </Typography>
-                  <Typography 
-                    color="text.secondary" 
-                    sx={{ 
-                      lineHeight: 1.7,
-                      fontSize: { xs: '0.875rem', sm: '1rem' }
-                    }}
-                  >
-                    {event.description}
-                  </Typography>
-                </Box>
-              )}
-
-              {/* RSVP Section - Only show if authenticated and not owner */}
-              {isAuthenticated && !isOwner && (
-                <Box mb={4}>
-                  <DetailItem>
-                    <DetailIcon>
-                      <EventIcon />
-                    </DetailIcon>
-                    <Box sx={{ width: '100%' }}>
-                      <Typography 
-                        variant="h6" 
-                        gutterBottom 
-                        sx={{ 
-                          fontWeight: 600, 
-                          color: '#4a5568',
-                          fontSize: { xs: '1rem', sm: '1.25rem' }
-                        }}
-                      >
-                        Your Response
+                  {/* Description Section */}
+                  {event.description && (
+                    <DetailItem>
+                      <DetailIcon>
+                        <EventIcon />
+                      </DetailIcon>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '1rem' }}>
+                        {event.description}
                       </Typography>
-                      <Box display="flex" gap={{ xs: 1, sm: 1.5 }} alignItems="center" flexWrap="wrap" mt={1}>
-                        <RSVPButton
-                          variant="yes"
-                          selected={userRSVP === 'yes'}
-                          startIcon={<CheckCircleIcon />}
-                          onClick={() => handleRSVP('yes')}
-                          disabled={submittingRSVP}
-                        >
-                          Yes
-                        </RSVPButton>
-                        <RSVPButton
-                          variant="no"
-                          selected={userRSVP === 'no'}
-                          startIcon={<CancelIcon />}
-                          onClick={() => handleRSVP('no')}
-                          disabled={submittingRSVP}
-                        >
-                          No
-                        </RSVPButton>
-                        <RSVPButton
-                          variant="maybe"
-                          selected={userRSVP === 'maybe'}
-                          startIcon={<HelpIcon />}
-                          onClick={() => handleRSVP('maybe')}
-                          disabled={submittingRSVP}
-                        >
-                          Maybe
-                        </RSVPButton>
-                      </Box>
-                    </Box>
-                  </DetailItem>
-                </Box>
-              )}
+                    </DetailItem>
+                  )}
 
-              {/* Login prompt for unauthenticated users */}
-              {!isAuthenticated && (
-                <Box mb={4}>
-                  <DetailItem>
-                    <DetailIcon>
-                      <EventIcon />
-                    </DetailIcon>
-                    <Box sx={{ width: '100%' }}>
-                      <Typography 
-                        variant="h6" 
-                        gutterBottom 
-                        sx={{ 
-                          fontWeight: 600, 
-                          color: '#4a5568',
-                          fontSize: { xs: '1rem', sm: '1.25rem' }
-                        }}
-                      >
-                        RSVP
-                      </Typography>
-                      <Box p={2} sx={{ backgroundColor: '#f0f4ff', borderRadius: '12px' }}>
-                        <Typography color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                          Please log in to respond to this invitation
-                        </Typography>
-                        <PrimaryButton 
-                          onClick={() => window.location.href = '/login'} 
-                          size="small"
-                          sx={{ mt: 1.5 }}
-                        >
-                          Login to RSVP
-                        </PrimaryButton>
-                      </Box>
-                    </Box>
-                  </DetailItem>
-                </Box>
-              )}
-
-              {/* RSVP Counts - Only show if owner and counts are available */}
-              {isOwner && (rsvpCounts.yes > 0 || rsvpCounts.no > 0 || rsvpCounts.maybe > 0) && (
-                <Box mb={4}>
-                  <DetailItem>
-                    <DetailIcon>
-                      <GroupIcon />
-                    </DetailIcon>
+                  {/* RSVP Section - Only show if authenticated and not owner */}
+                  {isAuthenticated && !isOwner && (
                     <Box>
-                      <Typography 
-                        variant="h6" 
-                        gutterBottom 
-                        sx={{ 
-                          fontWeight: 600, 
-                          color: '#4a5568',
-                          fontSize: { xs: '1rem', sm: '1.25rem' }
-                        }}
-                      >
-                        Guest Responses
-                      </Typography>
-                      <Box display="flex" gap={{ xs: 1.5, sm: 2 }} flexWrap="wrap">
-                        <Box display="flex" alignItems="center" gap={0.5}>
-                          <CheckCircleIcon sx={{ color: '#059669', fontSize: '1.25rem' }} />
-                          <Typography sx={{ color: '#059669', fontWeight: 600 }}>
-                            {rsvpCounts.yes || 0} Going
+                      <DetailItem>
+                        <DetailIcon>
+                          <EventIcon />
+                        </DetailIcon>
+                        <Box sx={{ width: '100%' }}>
+                          <Typography 
+                            variant="h6" 
+                            gutterBottom 
+                            sx={{ 
+                              fontWeight: 600, 
+                              color: '#4a5568',
+                              fontSize: { xs: '1rem', sm: '1.25rem' }
+                            }}
+                          >
+                            Your Response
                           </Typography>
+                          <Box display="flex" gap={{ xs: 1, sm: 1.5 }} alignItems="center" flexWrap="wrap" mt={1}>
+                            <RSVPButton
+                              variant="yes"
+                              selected={userRSVP === 'yes'}
+                              startIcon={<CheckCircleIcon />}
+                              onClick={() => handleRSVP('yes')}
+                              disabled={submittingRSVP}
+                            >
+                              Yes
+                            </RSVPButton>
+                            <RSVPButton
+                              variant="no"
+                              selected={userRSVP === 'no'}
+                              startIcon={<CancelIcon />}
+                              onClick={() => handleRSVP('no')}
+                              disabled={submittingRSVP}
+                            >
+                              No
+                            </RSVPButton>
+                            <RSVPButton
+                              variant="maybe"
+                              selected={userRSVP === 'maybe'}
+                              startIcon={<HelpIcon />}
+                              onClick={() => handleRSVP('maybe')}
+                              disabled={submittingRSVP}
+                            >
+                              Maybe
+                            </RSVPButton>
+                          </Box>
                         </Box>
-                        <Box display="flex" alignItems="center" gap={0.5}>
-                          <HelpIcon sx={{ color: '#d97706', fontSize: '1.25rem' }} />
-                          <Typography sx={{ color: '#d97706', fontWeight: 600 }}>
-                            {rsvpCounts.maybe || 0} Maybe
-                          </Typography>
-                        </Box>
-                        <Box display="flex" alignItems="center" gap={0.5}>
-                          <CancelIcon sx={{ color: '#dc2626', fontSize: '1.25rem' }} />
-                          <Typography sx={{ color: '#dc2626', fontWeight: 600 }}>
-                            {rsvpCounts.no || 0} Not Going
-                          </Typography>
-                        </Box>
-                      </Box>
+                      </DetailItem>
                     </Box>
-                  </DetailItem>
-                </Box>
-              )}
+                  )}
 
-              {/* Actions */}
-              <Box display="flex" gap={2} flexWrap="wrap" mt={4}>
-                <PrimaryButton startIcon={<ShareIcon />} onClick={handleShare}>
-                  Share Event
-                </PrimaryButton>
-                
-                {isOwner && (
-                  <SecondaryButton 
-                    startIcon={<EditIcon />} 
-                    onClick={() => window.location.href = `/edit-event/${eventId || window.eventId}`}
+                  {/* Login prompt for unauthenticated users */}
+                  {!isAuthenticated && (
+                    <Box>
+                      <DetailItem>
+                        <DetailIcon>
+                          <EventIcon />
+                        </DetailIcon>
+                        <Box sx={{ width: '100%' }}>
+                          <Typography 
+                            variant="h6" 
+                            gutterBottom 
+                            sx={{ 
+                              fontWeight: 600, 
+                              color: '#4a5568',
+                              fontSize: { xs: '1rem', sm: '1.25rem' }
+                            }}
+                          >
+                            RSVP
+                          </Typography>
+                          <Box p={2} sx={{ backgroundColor: '#f0f4ff', borderRadius: '12px' }}>
+                            <Typography color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                              Please log in to respond to this invitation
+                            </Typography>
+                            <PrimaryButton 
+                              onClick={() => window.location.href = '/login'} 
+                              size="small"
+                              sx={{ mt: 1.5 }}
+                            >
+                              Login to RSVP
+                            </PrimaryButton>
+                          </Box>
+                        </Box>
+                      </DetailItem>
+                    </Box>
+                  )}
+
+                  {/* RSVP Counts - Only show if owner and counts are available */}
+                  {isOwner && (rsvpCounts.yes > 0 || rsvpCounts.no > 0 || rsvpCounts.maybe > 0) && (
+                    <Box>
+                      <DetailItem>
+                        <DetailIcon>
+                          <GroupIcon />
+                        </DetailIcon>
+                        <Box display="flex" gap={{ xs: 1.5, sm: 2 }} flexWrap="wrap">
+                          <Box display="flex" alignItems="center" gap={0.5}>
+                            <CheckCircleIcon sx={{ color: '#059669', fontSize: '1.25rem' }} />
+                            <Typography sx={{ color: '#059669', fontWeight: 600 }}>
+                              {rsvpCounts.yes || 0}
+                            </Typography>
+                          </Box>
+                          <Box display="flex" alignItems="center" gap={0.5}>
+                            <HelpIcon sx={{ color: '#d97706', fontSize: '1.25rem' }} />
+                            <Typography sx={{ color: '#d97706', fontWeight: 600 }}>
+                              {rsvpCounts.maybe || 0}
+                            </Typography>
+                          </Box>
+                          <Box display="flex" alignItems="center" gap={0.5}>
+                            <CancelIcon sx={{ color: '#dc2626', fontSize: '1.25rem' }} />
+                            <Typography sx={{ color: '#dc2626', fontWeight: 600 }}>
+                              {rsvpCounts.no || 0}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </DetailItem>
+                    </Box>
+                  )}
+                </Grid>
+
+                {/* RIGHT COLUMN - Venue and Map */}
+                <Grid item xs={12} sm={6}>
+                  {/* Venue Section */}
+                  <DetailItem>
+                    <DetailIcon>
+                      <LocationIcon />
+                    </DetailIcon>
+                    <Typography 
+                      variant="body2" 
+                      component="a"
+                      color="text.secondary"
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.venue)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{
+                        fontSize: '1rem',
+                        textDecoration: 'none',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                          color: theme.palette.primary.main,
+                        }
+                      }}
+                    >
+                      {event.venue}
+                    </Typography>
+                  </DetailItem>
+                  
+                  {/* Embedded Map */}
+                  <Box 
+                    sx={{ 
+                      height: isMobile ? '200px' : '250px', 
+                      width: '100%', 
+                      borderRadius: '16px', 
+                      overflow: 'hidden', 
+                      border: '1px solid #e0e0e0' 
+                    }}
                   >
-                    Edit Event
-                  </SecondaryButton>
-                )}
-              </Box>
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://www.google.com/maps/embed/v1/place?key=${window.GOOGLE_MAPS_API_KEY || 'YOUR_FALLBACK_API_KEY'}&q=${encodeURIComponent(event.venue)}`}
+                    ></iframe>
+                  </Box>
+                </Grid>
+              </Grid>
             </CardContent>
           </EventCard>
         </Container>
@@ -837,7 +878,7 @@ const EventDetailPage = ({ eventId, userInfo: propUserInfo }) => {
           <PrimaryButton
             fullWidth
             startIcon={<CopyIcon />}
-            onClick={copyShareUrl}
+            onClick={handleShare}
             sx={{ mt: 2 }}
           >
             Copy Link

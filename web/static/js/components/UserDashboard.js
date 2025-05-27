@@ -51,6 +51,8 @@ import {
   Person as PersonIcon,
   Share as ShareIcon,
   Description as DescriptionIcon,
+  Group as GroupIcon,
+  Help as HelpIcon,
 } from '@mui/icons-material';
 import SharedHeader from './SharedHeader';
 
@@ -199,7 +201,26 @@ const UserDashboard = ({ userData }) => {
       });
       const data = await response.json();
       if (data.events) {
-        setMyEvents(data.events);
+        // Fetch RSVP counts for each event where user is host
+        const eventsWithCounts = await Promise.all(data.events.map(async (event) => {
+          try {
+            const rsvpResponse = await fetch(`/api/events/${event.id}/rsvps`, {
+              credentials: 'same-origin'
+            });
+            const rsvpData = await rsvpResponse.json();
+            return {
+              ...event,
+              rsvp_counts: rsvpData.counts || { yes: 0, no: 0, maybe: 0 }
+            };
+          } catch (error) {
+            console.error(`Error fetching RSVP counts for event ${event.id}:`, error);
+            return {
+              ...event,
+              rsvp_counts: { yes: 0, no: 0, maybe: 0 }
+            };
+          }
+        }));
+        setMyEvents(eventsWithCounts);
       }
     } catch (error) {
       console.error('Error fetching my events:', error);
@@ -388,19 +409,19 @@ const UserDashboard = ({ userData }) => {
   const now = new Date();
   const upcomingHosted = myEvents.filter(event => {
     const eventDate = new Date(event.event_date);
-    return eventDate >= now;
+    return eventDate >= now && event.status !== 'draft';
   });
   const upcomingInvited = rsvpEvents.filter(rsvp => {
     const eventDate = new Date(rsvp.event.event_date);
-    return eventDate >= now;
+    return eventDate >= now && rsvp.event.status !== 'draft';
   });
   const pastHosted = myEvents.filter(event => {
     const eventDate = new Date(event.event_date);
-    return eventDate < now;
+    return eventDate < now && event.status !== 'draft';
   });
   const pastInvited = rsvpEvents.filter(rsvp => {
     const eventDate = new Date(rsvp.event.event_date);
-    return eventDate < now;
+    return eventDate < now && rsvp.event.status !== 'draft';
   });
   const draftEvents = myEvents.filter(event => event.status === 'draft');
   const upcomingEvents = [
@@ -413,18 +434,29 @@ const UserDashboard = ({ userData }) => {
   ].sort((a, b) => new Date(b.event_date) - new Date(a.event_date));
 
   // Share handler
-  const handleShare = (event, eventId, eventTitle) => {
-    event.stopPropagation();
+  const handleShare = (e, eventId, eventTitle, eventDate, eventVenue) => {
+    e.stopPropagation();
     const url = `${window.location.protocol}//${window.location.host}/events/${eventId}`;
+    // Format date/time for sharing
+    const start = new Date(eventDate);
+    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // +2 hours
+    const formatShareDate = (start, end) => {
+      const options = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
+      const dateStr = start.toLocaleDateString('en-US', options);
+      const startTime = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      return `On ${dateStr}, ${startTime} – ${endTime}`;
+    };
+    const shareText = `${eventTitle}\n${formatShareDate(start, end)}\nAt ${eventVenue}\nView details and RSVP\n${url}`;
     if (navigator.share) {
       navigator.share({
         title: eventTitle || 'Event',
-        text: `You're invited! See event details and RSVP: ${eventTitle || ''}`,
+        text: shareText,
         url,
-      }).catch(() => {}); // Ignore errors (e.g., user cancels)
+      }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(url);
-      setSnackbar({ open: true, message: 'Link copied to clipboard!', severity: 'success' });
+      navigator.clipboard.writeText(shareText);
+      setSnackbar({ open: true, message: 'Event details copied to clipboard!', severity: 'success' });
     }
   };
 
@@ -463,9 +495,10 @@ const UserDashboard = ({ userData }) => {
     }
   };
 
+  // Share the event data with the rsvp_counts between desktop and mobile views
   const filteredEvents = (viewMode === 'upcoming' ? upcomingEvents :
-    viewMode === 'hosting' ? myEvents :
-    viewMode === 'attending' ? rsvpEvents.map(rsvp => rsvp.event) :
+    viewMode === 'hosting' ? myEvents.filter(event => event.status !== 'draft') :
+    viewMode === 'attending' ? rsvpEvents.map(rsvp => rsvp.event).filter(event => event.status !== 'draft') :
     viewMode === 'past' ? pastEvents :
     viewMode === 'drafts' ? draftEvents :
     upcomingEvents);
@@ -609,7 +642,7 @@ const UserDashboard = ({ userData }) => {
                             ) : event._type === 'attendee' ? (
                               <Chip label="Attending" size="small" sx={{ backgroundColor: '#764ba2', color: 'white', ml: 1 }} />
                             ) : null}
-                            <IconButton size="small" aria-label="share" onClick={e => handleShare(e, event.id, event.title)} sx={{ ml: 0.5 }}>
+                            <IconButton size="small" aria-label="share" onClick={e => handleShare(e, event.id, event.title, event.event_date, event.venue)} sx={{ ml: 0.5 }}>
                               <ShareIcon fontSize="small" />
                             </IconButton>
                           </Box>
@@ -652,6 +685,34 @@ const UserDashboard = ({ userData }) => {
                             </Typography>
                           </Box>
                         )}
+                        
+                        {/* RSVP Counts - Only show if host */}
+                        {event._type === 'host' && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.2 }}>
+                            <GroupIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
+                            <Box display="flex" gap={1} flexWrap="wrap">
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                <CheckCircleIcon sx={{ color: '#059669', fontSize: '1rem' }} />
+                                <Typography variant="body2" sx={{ color: '#059669', fontWeight: 600 }}>
+                                  {event.rsvp_counts?.yes || 0}
+                                </Typography>
+                              </Box>
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                <HelpIcon sx={{ color: '#d97706', fontSize: '1rem' }} />
+                                <Typography variant="body2" sx={{ color: '#d97706', fontWeight: 600 }}>
+                                  {event.rsvp_counts?.maybe || 0}
+                                </Typography>
+                              </Box>
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                <CancelIcon sx={{ color: '#dc2626', fontSize: '1rem' }} />
+                                <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 600 }}>
+                                  {event.rsvp_counts?.no || 0}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Box>
+                        )}
+                        
                         <Chip 
                           label={`${getEventTypeIcon(event.event_type)} ${event.event_type.replace('_', ' ')}`}
                           size="small" 
@@ -806,7 +867,7 @@ const UserDashboard = ({ userData }) => {
                             ) : event._type === 'attendee' ? (
                               <Chip label="Attending" size="small" sx={{ backgroundColor: '#764ba2', color: 'white', ml: 1 }} />
                             ) : null}
-                            <IconButton size="small" aria-label="share" onClick={e => handleShare(e, event.id, event.title)} sx={{ ml: 0.5 }}>
+                            <IconButton size="small" aria-label="share" onClick={e => handleShare(e, event.id, event.title, event.event_date, event.venue)} sx={{ ml: 0.5 }}>
                               <ShareIcon fontSize="small" />
                             </IconButton>
                           </Box>
@@ -849,6 +910,34 @@ const UserDashboard = ({ userData }) => {
                             </Typography>
                           </Box>
                         )}
+                        
+                        {/* RSVP Counts - Only show if host */}
+                        {event._type === 'host' && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.2 }}>
+                            <GroupIcon sx={{ fontSize: 16, mr: 1, color: '#667eea', flexShrink: 0 }} />
+                            <Box display="flex" gap={1} flexWrap="wrap">
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                <CheckCircleIcon sx={{ color: '#059669', fontSize: '1rem' }} />
+                                <Typography variant="body2" sx={{ color: '#059669', fontWeight: 600 }}>
+                                  {event.rsvp_counts?.yes || 0}
+                                </Typography>
+                              </Box>
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                <HelpIcon sx={{ color: '#d97706', fontSize: '1rem' }} />
+                                <Typography variant="body2" sx={{ color: '#d97706', fontWeight: 600 }}>
+                                  {event.rsvp_counts?.maybe || 0}
+                                </Typography>
+                              </Box>
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                <CancelIcon sx={{ color: '#dc2626', fontSize: '1rem' }} />
+                                <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 600 }}>
+                                  {event.rsvp_counts?.no || 0}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Box>
+                        )}
+                        
                         <Chip 
                           label={`${getEventTypeIcon(event.event_type)} ${event.event_type.replace('_', ' ')}`}
                           size="small" 
