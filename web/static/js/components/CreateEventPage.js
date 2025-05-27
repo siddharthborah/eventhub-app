@@ -439,6 +439,7 @@ const CreateEventPage = ({ userId, userInfo }) => {
         user_id: userId,
         event_date: new Date(formData.event_date).toISOString(),
         max_attendees: parseInt(formData.max_attendees) || 0,
+        google_photos_enabled: googlePhotosEnabled && googlePhotosConnected, // Only enable if both toggle is on AND user is connected
       };
 
       // Add enhanced venue data if available from Google Places

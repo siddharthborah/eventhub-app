@@ -24,10 +24,16 @@ type Event struct {
 	IsPublic     bool      `json:"is_public" gorm:"default:true"`
 	MaxAttendees int       `json:"max_attendees" gorm:"default:0"` // 0 means unlimited
 	Status       string    `json:"status" gorm:"default:'draft'"`  // draft, published, cancelled
-	UserID       uuid.UUID `json:"user_id" gorm:"type:uuid"`
-	User         User      `json:"user" gorm:"foreignKey:UserID"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+
+	// Google Photos integration
+	GooglePhotosEnabled  bool   `json:"google_photos_enabled"`   // User wants Google Photos album for this event
+	GooglePhotosAlbumID  string `json:"google_photos_album_id"`  // Google Photos album ID
+	GooglePhotosAlbumURL string `json:"google_photos_album_url"` // Shareable URL for the album
+
+	UserID    uuid.UUID `json:"user_id" gorm:"type:uuid"`
+	User      User      `json:"user" gorm:"foreignKey:UserID"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // BeforeCreate hook to generate UUID

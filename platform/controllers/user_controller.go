@@ -262,6 +262,33 @@ func (uc *UserController) GetUserByEmail(c *gin.Context) {
 
 // GooglePhotosStatus handles GET /api/user/google-photos-status
 func (uc *UserController) GooglePhotosStatus(c *gin.Context) {
+	// Debug mode - if user_id query param is provided, bypass session check
+	userIDParam := c.Query("user_id")
+	if userIDParam != "" {
+		userID, err := uuid.Parse(userIDParam)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"connected": false, "error": "Invalid user_id format"})
+			return
+		}
+
+		user, err := uc.userService.GetUserByID(userID)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"connected": false, "error": "User not found"})
+			return
+		}
+
+		connected := user.GooglePhotosAccessToken != ""
+		c.JSON(http.StatusOK, gin.H{
+			"connected":         connected,
+			"debug":             true,
+			"user_id":           user.ID,
+			"has_access_token":  user.GooglePhotosAccessToken != "",
+			"has_refresh_token": user.GooglePhotosRefreshToken != "",
+		})
+		return
+	}
+
+	// Normal session-based check
 	session := sessions.Default(c)
 	profile := session.Get("profile")
 

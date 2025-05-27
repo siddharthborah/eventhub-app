@@ -38,6 +38,7 @@ import {
   Event as EventIcon,
   MoreVert as MoreVertIcon,
   Delete as DeleteIcon,
+  PhotoAlbum as PhotoAlbumIcon,
 } from '@mui/icons-material';
 import SharedHeader from './SharedHeader.js';
 
@@ -681,6 +682,38 @@ const EventDetailPage = ({ eventId, userInfo: propUserInfo }) => {
                       <Typography variant="body2" color="text.secondary" sx={{ fontSize: '1rem' }}>
                         {event.description}
                       </Typography>
+                    </DetailItem>
+                  )}
+
+                  {/* Google Photos Album Section */}
+                  {event.google_photos_enabled && (
+                    <DetailItem>
+                      <DetailIcon>
+                        <PhotoAlbumIcon />
+                      </DetailIcon>
+                      {event.google_photos_album_url ? (
+                        <Typography 
+                          variant="body2" 
+                          component="a"
+                          color="primary.main"
+                          href={event.google_photos_album_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{
+                            fontSize: '1rem',
+                            textDecoration: 'none',
+                            '&:hover': {
+                              textDecoration: 'underline',
+                            }
+                          }}
+                        >
+                          📸 Event Photos Album - View & Add Photos
+                        </Typography>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '1rem' }}>
+                          📸 Google Photos album will be available soon
+                        </Typography>
+                      )}
                     </DetailItem>
                   )}
 

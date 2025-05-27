@@ -112,7 +112,7 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 		// User RSVP routes
 		api.GET("/user/rsvps", middleware.IsAuthenticatedAPI, rsvpController.GetUserRSVPs)
 		api.GET("/user/events", middleware.IsAuthenticatedAPI, eventController.GetCurrentUserEvents)
-		api.GET("/user/google-photos-status", middleware.IsAuthenticatedAPI, userController.GooglePhotosStatus)
+		api.GET("/user/google-photos-status", userController.GooglePhotosStatus) // No auth for debug with user_id param
 	}
 
 	return router

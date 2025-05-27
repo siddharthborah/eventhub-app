@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -13,13 +16,15 @@ import (
 )
 
 type EventController struct {
-	eventService *services.EventService
+	eventService        *services.EventService
+	googlePhotosService *services.GooglePhotosService
 }
 
 // NewEventController creates a new event controller
 func NewEventController() *EventController {
 	return &EventController{
-		eventService: services.NewEventService(),
+		eventService:        services.NewEventService(),
+		googlePhotosService: services.NewGooglePhotosService(),
 	}
 }
 
@@ -31,9 +36,49 @@ func (ec *EventController) CreateEvent(c *gin.Context) {
 		return
 	}
 
+	// Create the event first
 	if err := ec.eventService.CreateEvent(&event); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Try to create Google Photos album if user wants it AND has connected Google Photos
+	ctx := context.Background()
+	if event.GooglePhotosEnabled {
+		log.Printf("User requested Google Photos album for event %v", event.ID)
+
+		hasGooglePhotos, err := ec.googlePhotosService.CheckUserHasGooglePhotos(event.UserID)
+		if err != nil {
+			log.Printf("❌ ERROR: Error checking Google Photos connection for user %v: %v", event.UserID, err)
+		} else if hasGooglePhotos {
+			log.Printf("User has Google Photos connected, creating album for event %v", event.ID)
+
+			// Create album title based on event title
+			albumTitle := fmt.Sprintf("%s - Photos", event.Title)
+
+			albumID, shareableURL, err := ec.googlePhotosService.CreateSharedAlbum(ctx, event.UserID, albumTitle)
+			if err != nil {
+				log.Printf("Failed to create Google Photos album for event %v: %v", event.ID, err)
+				// Continue without Google Photos album - don't fail the event creation
+			} else {
+				log.Printf("Successfully created Google Photos album %v for event %v", albumID, event.ID)
+
+				// Update the event with Google Photos album information
+				updates := map[string]interface{}{
+					"google_photos_album_id":  albumID,
+					"google_photos_album_url": shareableURL,
+				}
+
+				updatedEvent, updateErr := ec.eventService.UpdateEvent(event.ID, updates)
+				if updateErr != nil {
+					log.Printf("Failed to update event with Google Photos album info: %v", updateErr)
+				} else {
+					event = *updatedEvent // Use the updated event for response
+				}
+			}
+		} else {
+			log.Printf("⚠️  WARNING: User requested Google Photos album but hasn't connected Google Photos for event %v", event.ID)
+		}
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"data": event})
