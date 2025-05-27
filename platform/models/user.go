@@ -18,6 +18,11 @@ type User struct {
 	IsActive  bool      `json:"is_active" gorm:"default:true"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+
+	// Google Photos OAuth Tokens
+	GooglePhotosAccessToken  string    `json:"-"` // Store securely, don't expose in JSON responses
+	GooglePhotosRefreshToken string    `json:"-"` // Store securely, don't expose in JSON responses
+	GooglePhotosTokenExpiry  time.Time `json:"-"` // Store securely, don't expose in JSON responses
 }
 
 // BeforeCreate hook to generate UUID

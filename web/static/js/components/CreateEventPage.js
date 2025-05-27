@@ -22,6 +22,8 @@ import {
   Divider,
   Card,
   CardMedia,
+  Link,
+  Tooltip
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -31,6 +33,9 @@ import {
   LocationOn as LocationIcon,
   ExpandMore as ExpandMoreIcon,
   ChevronRight as ChevronRightIcon,
+  Settings as SettingsIcon,
+  PhotoAlbum as PhotoAlbumIcon,
+  CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 import SharedHeader from './SharedHeader';
 
@@ -76,6 +81,22 @@ const SecondaryButton = styled(ActionButton)(({ theme }) => ({
     color: 'white',
     transform: 'translateY(-2px)',
   },
+}));
+
+// Add missing styled components for detail sections
+const DetailItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  marginBottom: theme.spacing(2.5),
+}));
+
+const DetailIcon = styled(Box)(({ theme }) => ({
+  color: '#667eea',
+  fontSize: '18px',
+  marginTop: 0,
+  display: 'flex',
+  alignItems: 'center',
 }));
 
 // Google Places Autocomplete Component
@@ -249,6 +270,8 @@ const CreateEventPage = ({ userId, userInfo }) => {
     image: '',
     event_type: 'birthday',
     max_attendees: 0,
+    is_public: true,
+    status: 'published', // Default status
   });
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState(eventTypeImages[formData.event_type]);
@@ -257,6 +280,8 @@ const CreateEventPage = ({ userId, userInfo }) => {
   const [success, setSuccess] = useState(false);
   const [mapsLoaded, setMapsLoaded] = useState(false);
   const [showAdditionalSettings, setShowAdditionalSettings] = useState(false);
+  const [googlePhotosConnected, setGooglePhotosConnected] = useState(false); // New state
+  const [googlePhotosEnabled, setGooglePhotosEnabled] = useState(false);
 
   // Effect to update image preview when event_type or custom image changes
   useEffect(() => {
@@ -277,9 +302,9 @@ const CreateEventPage = ({ userId, userInfo }) => {
     // You need to set your Google Maps API key here
     // Get your API key from: https://console.cloud.google.com/apis/credentials
     // Make sure to enable Places API for your project
-    const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'YOUR_GOOGLE_MAPS_API_KEY';
+    const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
     
-    if (GOOGLE_MAPS_API_KEY === 'YOUR_GOOGLE_MAPS_API_KEY') {
+    if (!GOOGLE_MAPS_API_KEY) {
       console.warn('Google Maps API key not configured. Set REACT_APP_GOOGLE_MAPS_API_KEY environment variable.');
       setMapsLoaded(false);
       return;
@@ -289,6 +314,7 @@ const CreateEventPage = ({ userId, userInfo }) => {
     script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
     script.async = true;
     script.defer = true;
+    script.setAttribute('loading', 'async');
     script.onload = () => setMapsLoaded(true);
     script.onerror = () => {
       console.error('Failed to load Google Maps API. Check your API key and internet connection.');
@@ -304,6 +330,40 @@ const CreateEventPage = ({ userId, userInfo }) => {
       }
     };
   }, []);
+
+  // Check for Google Photos connection status from backend and URL parameters
+  useEffect(() => {
+    // 1. Check backend for persistent connection
+    fetch('/api/user/google-photos-status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.connected) setGooglePhotosConnected(true);
+      });
+
+    // 2. Check URL params for immediate feedback after OAuth
+    const urlParams = new URLSearchParams(window.location.search);
+    const googlePhotosConnected = urlParams.get('google_photos_connected');
+    const googlePhotosError = urlParams.get('google_photos_error');
+    
+    if (googlePhotosConnected === 'true') {
+      setGooglePhotosConnected(true);
+      // Optional: Show success message
+      console.log('Google Photos connected successfully!');
+      // Clean up URL parameters
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+    
+    if (googlePhotosError) {
+      // Handle error cases
+      console.error('Google Photos connection error:', googlePhotosError);
+      // You could show an error message to the user here
+      alert(`Google Photos connection failed: ${googlePhotosError}`);
+      // Clean up URL parameters
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []); // Run only once when component mounts
 
   const eventTypes = [
     { value: 'birthday', label: '🎂 Birthday' },
@@ -345,6 +405,27 @@ const CreateEventPage = ({ userId, userInfo }) => {
         [field]: inputValue
       }));
     }
+  };
+
+  const handleGooglePhotosConnect = () => {
+    const YOUR_GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+    const YOUR_REDIRECT_URI = process.env.REACT_APP_GOOGLE_REDIRECT_URI;
+
+    // Scopes for Google Photos API - requesting permission to create and share albums
+    const scopes = [
+      'https://www.googleapis.com/auth/photoslibrary.sharing',
+      'https://www.googleapis.com/auth/photoslibrary.appendonly' // If you also want to allow the app to add items
+    ];
+
+    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${YOUR_GOOGLE_CLIENT_ID}` +
+      `&redirect_uri=${encodeURIComponent(YOUR_REDIRECT_URI)}` +
+      `&response_type=code` +
+      `&scope=${encodeURIComponent(scopes.join(' '))}` +
+      `&access_type=offline` + // To get a refresh token
+      `&prompt=consent`; // Forces the consent screen every time, useful for testing. Remove for production.
+
+    window.location.href = oauthUrl;
   };
 
   const handleSubmit = async (e) => {
@@ -477,6 +558,8 @@ const CreateEventPage = ({ userId, userInfo }) => {
                   <TextField
                     fullWidth
                     label="Event Title"
+                    id="event-title"
+                    name="title"
                     value={formData.title}
                     onChange={handleChange('title')}
                     required
@@ -488,6 +571,8 @@ const CreateEventPage = ({ userId, userInfo }) => {
                   <TextField
                     fullWidth
                     label="Description"
+                    id="event-description"
+                    name="description"
                     value={formData.description}
                     onChange={handleChange('description')}
                     multiline
@@ -498,8 +583,11 @@ const CreateEventPage = ({ userId, userInfo }) => {
 
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth required>
-                    <InputLabel>Event Type</InputLabel>
+                    <InputLabel id="event-type-label">Event Type</InputLabel>
                     <Select
+                      labelId="event-type-label"
+                      id="event-type"
+                      name="event_type"
                       value={formData.event_type}
                       onChange={handleChange('event_type')}
                       label="Event Type"
@@ -524,6 +612,8 @@ const CreateEventPage = ({ userId, userInfo }) => {
                   <TextField
                     fullWidth
                     label="Event Date & Time"
+                    id="event-date"
+                    name="event_date"
                     type="datetime-local"
                     value={formData.event_date}
                     onChange={handleChange('event_date')}
@@ -539,6 +629,8 @@ const CreateEventPage = ({ userId, userInfo }) => {
                     <GooglePlacesAutocomplete
                       fullWidth
                       label="Venue"
+                      id="event-venue-autocomplete"
+                      name="venue"
                       value={formData.venue}
                       onChange={handleChange('venue')}
                       placeholder="Search for venues, restaurants, parks..."
@@ -548,6 +640,8 @@ const CreateEventPage = ({ userId, userInfo }) => {
                     <TextField
                       fullWidth
                       label="Venue"
+                      id="event-venue-manual"
+                      name="venue"
                       value={formData.venue}
                       onChange={handleChange('venue')}
                       placeholder="e.g., Central Park, 123 Main St"
@@ -588,6 +682,8 @@ const CreateEventPage = ({ userId, userInfo }) => {
                     <TextField
                       fullWidth
                       label="Max Attendees"
+                      id="max-attendees"
+                      name="max_attendees"
                       type="number"
                       value={formData.max_attendees}
                       onChange={handleChange('max_attendees')}
@@ -603,11 +699,70 @@ const CreateEventPage = ({ userId, userInfo }) => {
                     <TextField
                       fullWidth
                       label="Event Image URL (Custom)"
+                      id="event-image-url"
+                      name="image"
                       value={formData.image}
                       onChange={handleChange('image')}
                       placeholder="https://example.com/your-custom-image.jpg"
                       helperText="Leave empty to use template image based on event type."
                     />
+                  </Collapse>
+                </Grid>
+
+                {/* Collapsed Content: Google Photos Connect */}
+                <Grid item xs={12}>
+                  <Collapse in={showAdditionalSettings} timeout="auto" unmountOnExit sx={{ width: '100%'}}>
+                    <Box sx={{ mt: 2 }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            id="google-photos-enabled-switch"
+                            name="google_photos_enabled"
+                            checked={googlePhotosEnabled}
+                            onChange={e => setGooglePhotosEnabled(e.target.checked)}
+                            color="primary"
+                          />
+                        }
+                        label={<Typography variant="subtitle1" sx={{ fontWeight: 500 }}>Add Google Photo Album</Typography>}
+                        sx={{ mb: googlePhotosEnabled ? 1 : 0 }}
+                      />
+
+                      {googlePhotosEnabled && (
+                        <Box 
+                          sx={{
+                            mt: 1,
+                            p: 2,
+                            border: '1px solid',
+                            borderColor: googlePhotosConnected ? 'success.main' : 'divider',
+                            borderRadius: '8px',
+                            backgroundColor: googlePhotosConnected ? 'rgba(76, 175, 80, 0.04)' : 'transparent'
+                          }}
+                        >
+                          {googlePhotosConnected ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <CheckCircleIcon sx={{ color: 'success.main', fontSize: 18 }} />
+                              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                                Connected to Google Photos
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <>
+                              <Typography color="text.secondary" sx={{ mb: 1.5, fontSize: '0.9rem' }}>
+                                Connect your Google Photos account to automatically create a shared album for this event. Guests will be able to view and add photos.
+                              </Typography>
+                              <Button
+                                variant="outlined"
+                                color="primary"
+                                startIcon={<PhotoAlbumIcon />}
+                                onClick={handleGooglePhotosConnect}
+                              >
+                                Connect Google Photos
+                              </Button>
+                            </>
+                          )}
+                        </Box>
+                      )}
+                    </Box>
                   </Collapse>
                 </Grid>
 

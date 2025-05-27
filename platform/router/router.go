@@ -38,17 +38,13 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 		sessionSecret = "your-secret-key-change-in-production"
 	}
 
-	// Determine if we're using HTTPS (production or ngrok)
-	// For ngrok, we want secure cookies since it's HTTPS
-	isSecure := os.Getenv("SESSION_SECRET") != "" || os.Getenv("AUTH0_CALLBACK_URL") != ""
-
 	store := cookie.NewStore([]byte(sessionSecret))
 	store.Options(sessions.Options{
 		Path:     "/",
 		MaxAge:   int(24 * time.Hour.Seconds()),
-		Secure:   isSecure, // Use secure cookies for HTTPS (production or ngrok)
+		Secure:   true, // Always use secure cookies for OAuth (ngrok/production)
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteNoneMode, // Required for cross-site OAuth flows
 	})
 	router.Use(sessions.Sessions("auth-session", store))
 
@@ -77,6 +73,11 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 	// API routes
 	api := router.Group("/api")
 	{
+		// OAuth Callbacks - should these be under /api or top-level like /callback?
+		// Placing under /api for now, ensure frontend redirect_uri matches.
+		// This route should be accessible without IsAuthenticatedAPI if the user is completing OAuth flow.
+		api.GET("/oauth/google/callback", userController.GoogleOAuthCallback)
+
 		// User routes
 		users := api.Group("/users")
 		{
@@ -111,6 +112,7 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 		// User RSVP routes
 		api.GET("/user/rsvps", middleware.IsAuthenticatedAPI, rsvpController.GetUserRSVPs)
 		api.GET("/user/events", middleware.IsAuthenticatedAPI, eventController.GetCurrentUserEvents)
+		api.GET("/user/google-photos-status", middleware.IsAuthenticatedAPI, userController.GooglePhotosStatus)
 	}
 
 	return router
