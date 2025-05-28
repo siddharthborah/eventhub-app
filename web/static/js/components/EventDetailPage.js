@@ -686,7 +686,7 @@ const EventDetailPage = ({ eventId, userInfo: propUserInfo }) => {
                   )}
 
                   {/* Google Photos Album Section */}
-                  {event.google_photos_enabled && (
+                  {isAuthenticated && event.google_photos_enabled && (
                     <DetailItem>
                       <DetailIcon>
                         <PhotoAlbumIcon />
@@ -695,7 +695,7 @@ const EventDetailPage = ({ eventId, userInfo: propUserInfo }) => {
                         <Typography 
                           variant="body2" 
                           component="a"
-                          color="primary.main"
+                          color="text.secondary"
                           href={event.google_photos_album_url}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -707,7 +707,7 @@ const EventDetailPage = ({ eventId, userInfo: propUserInfo }) => {
                             }
                           }}
                         >
-                          📸 Event Photos Album - View & Add Photos
+                          Google Photo Album
                         </Typography>
                       ) : (
                         <Typography variant="body2" color="text.secondary" sx={{ fontSize: '1rem' }}>
