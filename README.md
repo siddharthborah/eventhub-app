@@ -1,36 +1,109 @@
-# Events Management App
+# EventHub - Cross-Platform Events Management App
 
-A modern events management web application with authentication using Auth0, built with Go and React.
+A modern events management application with authentication using Auth0, built with Go backend and React/React Native frontends. Supports **Web**, **iOS**, **Android**, and **Mobile Web** platforms.
 
 ## Features
 
+- **Multi-Platform**: Web app (React), Native mobile apps (React Native), and mobile web
 - **User Authentication**: Secure login/logout with Auth0 OAuth
-- **Events Management**: Full CRUD operations for events
-- **Modern UI**: Clean, responsive design with Material-UI
+- **Events Management**: Full CRUD operations for events across all platforms
+- **Modern UI**: Clean, responsive design with Material-UI (web) and native components (mobile)
 - **Event Types**: Support for birthdays, anniversaries, weddings, and more
 - **Search & Filter**: Advanced event discovery capabilities
-- **Mobile-Friendly**: Responsive design that works on all devices
+- **Shared Codebase**: 70% code sharing between web and mobile platforms
 - **Real-time Updates**: Dynamic event creation and management
+- **Native Features**: Camera, maps, push notifications (mobile)
 
 ## Tech Stack
 
-- **Backend**: Go with Gin framework
-- **Frontend**: React with Material-UI
+### Backend
+- **API**: Go with Gin framework
 - **Database**: PostgreSQL with GORM
 - **Authentication**: Auth0 OAuth
-- **Build Tool**: Webpack for frontend bundling
+
+### Frontend (Shared)
+- **Shared Package**: Business logic, API calls, hooks, validation
+- **Date Handling**: date-fns library
+
+### Web App
+- **Framework**: React 18
+- **UI Library**: Material-UI
+- **Build Tool**: Webpack
+- **Styling**: CSS + Material-UI
+
+### Mobile Apps
+- **Framework**: React Native 0.79
+- **Navigation**: React Navigation
+- **UI**: Native components
+- **Platforms**: iOS and Android
+
+## Project Structure
+
+```
+eventhub-app/
+├── packages/                    # 📦 Monorepo packages
+│   ├── shared/                 # 🔄 Shared code (70% reuse)
+│   │   ├── src/
+│   │   │   ├── api/           # API calls to Go backend
+│   │   │   ├── hooks/         # React hooks (useEvents, etc.)
+│   │   │   └── utils/         # Validation & utilities
+│   │   └── package.json
+│   ├── web/                   # 🌐 React web application
+│   │   ├── static/js/         # React components
+│   │   ├── template/          # HTML templates
+│   │   └── package.json
+│   └── mobile/                # 📱 React Native app
+│       ├── src/screens/       # Mobile screens
+│       ├── ios/               # iOS project
+│       ├── android/           # Android project
+│       └── package.json
+├── platform/                  # 🔧 Go backend
+│   ├── controllers/           # HTTP request handlers
+│   ├── services/             # Business logic layer
+│   ├── models/               # Data models
+│   ├── database/             # Database configuration
+│   ├── authenticator/        # Auth0 integration
+│   ├── middleware/           # HTTP middleware
+│   └── router/               # Route definitions
+├── main.go                    # Go application entry point
+├── package.json              # Monorepo configuration
+├── docker-compose.yml        # Database setup
+└── README.md                 # This file
+```
 
 ## Prerequisites
 
+### Backend Development
 - Go 1.16 or higher
-- Node.js 14 or higher
 - PostgreSQL database
 - Auth0 account
-- ngrok (for local development)
+
+### Web Development
+- Node.js 18 or higher
+- npm or yarn
+
+### Mobile Development
+- Node.js 18 or higher
+- **For iOS**: macOS, Xcode, iOS Simulator, CocoaPods
+- **For Android**: Android Studio, Android SDK, Java Development Kit
+
+### Optional
+- Docker (for database)
+- ngrok (for Auth0 development)
 
 ## Quick Start
 
-### 1. Database Setup
+### 1. Clone and Install
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd eventhub-app
+
+# Install all dependencies (monorepo)
+npm install --legacy-peer-deps
+```
+
+### 2. Database Setup
 ```bash
 # Using Docker (recommended)
 docker-compose up -d
@@ -39,35 +112,8 @@ docker-compose up -d
 # See DATABASE_SETUP.md for detailed instructions
 ```
 
-### 2. Backend Setup
-```bash
-# Install Go dependencies
-go mod download
-
-# Create environment file
-cp .env.example .env
-# Edit .env with your Auth0 and database credentials
-```
-
-### 3. Frontend Setup
-```bash
-cd web
-npm install
-npm run build
-```
-
-### 4. Run the Application
-```bash
-# Start the server
-go run main.go
-
-# For development with Auth0
-ngrok http 3000
-```
-
-## Environment Variables
-
-Create a `.env` file with the following variables:
+### 3. Environment Configuration
+Create a `.env` file in the project root:
 
 ```env
 # Auth0 Configuration
@@ -83,10 +129,96 @@ SESSION_SECRET=your-random-session-secret-key
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
-DB_PASSWORD=your-password
+DB_PASSWORD=password
 DB_NAME=loginapp
 DB_SSLMODE=disable
 ```
+
+### 4. Start Development
+
+#### Backend (Required for all platforms)
+```bash
+# Start Go server with hot reload
+air
+
+# Or start normally
+go run main.go
+```
+
+#### Web Application
+```bash
+# Start web development server
+npm run dev:web
+
+# Access at: http://localhost:3000
+```
+
+#### Mobile Application
+```bash
+# Start Metro bundler
+npm run start:mobile
+
+# In separate terminals:
+npm run ios       # Run on iOS Simulator
+npm run android   # Run on Android Emulator
+```
+
+## Development Scripts
+
+### Monorepo Management
+```bash
+npm run install:all      # Install all package dependencies
+npm run install:web      # Install web dependencies only
+npm run install:mobile   # Install mobile dependencies only
+npm run install:shared   # Install shared dependencies only
+```
+
+### Development
+```bash
+# Backend
+go run main.go          # Start Go server
+air                     # Start with hot reload
+
+# Web
+npm run dev:web         # Start web dev server
+npm run build:web       # Build web for production
+
+# Mobile
+npm run start:mobile    # Start Metro bundler
+npm run ios            # Run iOS app
+npm run android        # Run Android app
+
+# Linting
+npm run lint           # Lint all packages
+npm run lint:web       # Lint web package only
+npm run lint:mobile    # Lint mobile package only
+```
+
+## Code Sharing Architecture
+
+### Shared Package (`@eventhub/shared`)
+
+**What's Shared (70% of code):**
+- ✅ API calls to Go backend
+- ✅ Business logic and validation
+- ✅ Custom React hooks
+- ✅ Utility functions
+- ✅ Data types and constants
+
+**Example shared code:**
+```javascript
+// Both web and mobile use the same hooks
+import { useEvents, validateEvent, eventsAPI } from '@eventhub/shared';
+
+const { events, loading, error } = useEvents();
+const { isValid, errors } = validateEvent(eventData);
+```
+
+**What's Platform-Specific:**
+- ❌ UI Components (HTML vs Native)
+- ❌ Navigation (React Router vs React Navigation)
+- ❌ Styling approaches
+- ❌ Platform-specific features
 
 ## API Endpoints
 
@@ -104,47 +236,30 @@ DB_SSLMODE=disable
 - `GET /api/users` - List users
 - `GET /api/users/:id/events` - Get user's events
 
-## Project Structure
+### RSVP API
+- `POST /api/events/:id/rsvp` - Submit RSVP
+- `GET /api/events/:id/rsvp` - Get user's RSVP
+- `GET /api/events/:id/rsvps` - Get event RSVPs
 
-```
-.
-├── main.go                    # Application entry point
-├── platform/                 # Core business logic
-│   ├── controllers/          # HTTP request handlers
-│   ├── services/            # Business logic layer
-│   ├── models/              # Data models
-│   ├── database/            # Database configuration
-│   ├── authenticator/       # Auth0 integration
-│   ├── middleware/          # HTTP middleware
-│   └── router/              # Route definitions
-├── web/                     # Frontend application
-│   ├── app/                # Go web handlers
-│   ├── static/js/          # React components
-│   ├── template/           # HTML templates
-│   └── package.json        # Frontend dependencies
-├── test_events_api.sh       # API testing script
-└── docker-compose.yml       # Database setup
-```
+## Platform-Specific Features
 
-## Development
+### Web App
+- Material-UI components
+- Responsive design
+- Web-optimized performance
+- Browser-specific features
 
-### Backend Development
-```bash
-# Run with hot reload (install air: go install github.com/cosmtrek/air@latest)
-air
+### Mobile Apps
+- Native navigation
+- Touch gestures
+- Native camera access
+- Push notifications (planned)
+- Offline support (planned)
+- Maps integration (planned)
 
-# Or run normally
-go run main.go
-```
+## Testing
 
-### Frontend Development
-```bash
-cd web
-npm run dev  # Watch mode for development
-npm run build  # Production build
-```
-
-### Testing
+### API Testing
 ```bash
 # Test the Events API
 ./test_events_api.sh
@@ -153,45 +268,94 @@ npm run build  # Production build
 curl -X GET "http://localhost:3000/api/events"
 ```
 
-## Features Overview
+### Frontend Testing
+```bash
+# Run web tests
+cd packages/web && npm test
 
-### Event Management
-- Create events with title, description, date, venue
-- Choose from various event types (birthday, wedding, etc.)
-- Set events as public or private
-- Manage attendee limits
-- Upload event images
+# Run mobile tests  
+cd packages/mobile && npm test
+```
 
-### User Experience
-- Secure authentication flow
-- Intuitive event creation form
-- Mobile-responsive event listings
-- Search and filter capabilities
-- User dashboard with event management
+## Deployment
 
-### Technical Features
-- Clean Architecture pattern
-- RESTful API design
-- Database migrations
-- Session management
-- Error handling and validation
+### Backend
+```bash
+# Build Go binary
+go build -o eventhub main.go
 
-## Security
+# Deploy to your preferred platform
+```
 
-- OAuth authentication with Auth0
-- Secure session management
-- Protected API endpoints
-- Input validation and sanitization
-- Environment variable configuration
+### Web App
+```bash
+# Build for production
+npm run build:web
+
+# Deploy static files to CDN/hosting
+```
+
+### Mobile Apps
+```bash
+# iOS
+cd packages/mobile/ios
+xcodebuild # or use Xcode
+
+# Android
+cd packages/mobile/android
+./gradlew assembleRelease
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Metro bundler issues:**
+```bash
+cd packages/mobile
+npx react-native start --reset-cache
+```
+
+**iOS build issues:**
+```bash
+cd packages/mobile/ios
+pod install --repo-update
+```
+
+**Dependency conflicts:**
+```bash
+npm install --legacy-peer-deps
+```
+
+**Database connection issues:**
+- Check `.env` file configuration
+- Ensure PostgreSQL is running
+- Verify database credentials
+
+## Mobile Setup Guide
+
+For detailed mobile development setup, see [MOBILE_SETUP.md](MOBILE_SETUP.md).
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+4. Test on both web and mobile (if applicable)
+5. Add tests if applicable
+6. Submit a pull request
 
 ## License
 
 MIT License - see LICENSE file for details.
+
+---
+
+## Getting Help
+
+- **Backend Issues**: Check Go server logs and database connection
+- **Web Issues**: Check browser console and webpack build
+- **Mobile Issues**: Check Metro bundler and native build logs
+- **Shared Code Issues**: Check import paths and package dependencies
+
+**Happy Coding! 🚀**

@@ -10,18 +10,18 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 
+	"01-Login/packages/web/app/callback"
+	createevent "01-Login/packages/web/app/create-event"
+	editevent "01-Login/packages/web/app/edit-event"
+	"01-Login/packages/web/app/events"
+	"01-Login/packages/web/app/home"
+	"01-Login/packages/web/app/login"
+	"01-Login/packages/web/app/logout"
+	"01-Login/packages/web/app/signup"
+	"01-Login/packages/web/app/user"
 	"01-Login/platform/authenticator"
 	"01-Login/platform/controllers"
 	"01-Login/platform/middleware"
-	"01-Login/web/app/callback"
-	createevent "01-Login/web/app/create-event"
-	editevent "01-Login/web/app/edit-event"
-	"01-Login/web/app/events"
-	"01-Login/web/app/home"
-	"01-Login/web/app/login"
-	"01-Login/web/app/logout"
-	"01-Login/web/app/signup"
-	"01-Login/web/app/user"
 )
 
 // New registers the routes and returns the router.
@@ -48,10 +48,10 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 	})
 	router.Use(sessions.Sessions("auth-session", store))
 
-	// Serve static files
-	router.Static("/static", "web/static")
-	router.Static("/public", "web/static")
-	router.LoadHTMLGlob("web/template/*")
+	// Serve static files (updated paths)
+	router.Static("/static", "packages/web/static")
+	router.Static("/public", "packages/web/static")
+	router.LoadHTMLGlob("packages/web/template/*")
 
 	// Web routes (existing)
 	router.GET("/", home.Handler)
