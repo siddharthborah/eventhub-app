@@ -12,16 +12,8 @@ import (
 
 	"01-Login/platform/authenticator"
 	"01-Login/platform/controllers"
+	"01-Login/platform/handlers"
 	"01-Login/platform/middleware"
-	"01-Login/web/app/callback"
-	createevent "01-Login/web/app/create-event"
-	editevent "01-Login/web/app/edit-event"
-	"01-Login/web/app/events"
-	"01-Login/web/app/home"
-	"01-Login/web/app/login"
-	"01-Login/web/app/logout"
-	"01-Login/web/app/signup"
-	"01-Login/web/app/user"
 )
 
 // New registers the routes and returns the router.
@@ -54,16 +46,16 @@ func New(auth *authenticator.Authenticator) *gin.Engine {
 	router.LoadHTMLGlob("web/template/*")
 
 	// Web routes (existing)
-	router.GET("/", home.Handler)
-	router.GET("/login", login.Handler(auth))
-	router.GET("/signup", signup.Handler)
-	router.GET("/callback", callback.Handler(auth))
-	router.GET("/user", middleware.IsAuthenticated, user.Handler)
-	router.GET("/events", middleware.IsAuthenticated, events.Handler)
-	router.GET("/create-event", middleware.IsAuthenticated, createevent.Handler)
-	router.GET("/edit-event/:id", middleware.IsAuthenticated, editevent.Handler)
-	router.GET("/events/:id", events.DetailHandler)
-	router.GET("/logout", logout.Handler)
+	router.GET("/", handlers.HomeHandler)
+	router.GET("/login", handlers.LoginHandler(auth))
+	router.GET("/signup", handlers.SignupHandler)
+	router.GET("/callback", handlers.CallbackHandler(auth))
+	router.GET("/user", middleware.IsAuthenticated, handlers.UserHandler)
+	router.GET("/events", middleware.IsAuthenticated, handlers.EventsHandler)
+	router.GET("/create-event", middleware.IsAuthenticated, handlers.CreateEventHandler)
+	router.GET("/edit-event/:id", middleware.IsAuthenticated, handlers.EditEventHandler)
+	router.GET("/events/:id", handlers.EventDetailHandler)
+	router.GET("/logout", handlers.LogoutHandler)
 
 	// Initialize controllers
 	userController := controllers.NewUserController()
