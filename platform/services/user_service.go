@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"time"
 
 	"01-Login/platform/database"
 	"01-Login/platform/models"
@@ -121,18 +122,31 @@ func (s *UserService) CreateOrUpdateUserFromAuth(authID, email, name, picture st
 	// Try to find existing user by auth ID
 	user, err := s.GetUserByAuthID(authID)
 	if err == nil {
-		// Update existing user - only update email if it's not empty
-		updates := map[string]interface{}{
-			"name":    name,
-			"picture": picture,
-		}
+		// For existing users, only update if data has actually changed
+		updates := make(map[string]interface{})
 
-		// Only update email if it's not empty
-		if email != "" {
+		// Always update last login time
+		updates["updated_at"] = time.Now()
+
+		// Only update profile fields if they've changed and are not empty
+		if user.Name != name && name != "" {
+			updates["name"] = name
+		}
+		if user.Picture != picture && picture != "" {
+			updates["picture"] = picture
+		}
+		// Only update email if it's different, not empty, and current email is empty or different
+		if user.Email != email && email != "" {
 			updates["email"] = email
 		}
 
-		return s.UpdateUser(user.ID, updates)
+		// Only perform database update if there are actual changes beyond updated_at
+		if len(updates) > 1 { // More than just updated_at
+			return s.UpdateUser(user.ID, updates)
+		}
+
+		// Return existing user without unnecessary database write
+		return user, nil
 	}
 
 	// For new users, we need at least a name or email
